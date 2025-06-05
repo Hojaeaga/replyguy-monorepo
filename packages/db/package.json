@@ -1,0 +1,28 @@
+{
+    "name": "@replyguy/db",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Supabase client with typed queries for ReplyGuy",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "check-types": "tsc --noEmit",
+        "lint": "eslint src/",
+        "test": "jest"
+    },
+    "dependencies": {
+        "@replyguy/core": "workspace:*",
+        "@supabase/supabase-js": "^2.39.0"
+    },
+    "devDependencies": {
+        "@replyguy/eslint-config": "workspace:*",
+        "@replyguy/typescript-config": "workspace:*",
+        "@types/node": "^20.10.0",
+        "eslint": "^9.28.0",
+        "jest": "^29.7.0",
+        "tsup": "^8.0.1",
+        "typescript": "^5.3.0"
+    }
+}

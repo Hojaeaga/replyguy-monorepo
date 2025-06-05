@@ -1,0 +1,6 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "packages/config/eslint"
+  - "packages/config/tsconfig"
+  - "packages/config/prettier"

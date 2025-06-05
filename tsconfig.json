@@ -1,0 +1,46 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@replyguy/*": [
+                "packages/*/src"
+            ]
+        }
+    },
+    "files": [],
+    "references": [
+        {
+            "path": "./packages/core"
+        },
+        {
+            "path": "./packages/queue"
+        },
+        {
+            "path": "./packages/db"
+        },
+        {
+            "path": "./packages/reclaim"
+        },
+        {
+            "path": "./packages/farcaster-adapter"
+        },
+        {
+            "path": "./packages/openai"
+        },
+        {
+            "path": "./packages/ui"
+        },
+        {
+            "path": "./apps/ingestion"
+        },
+        {
+            "path": "./apps/worker"
+        },
+        {
+            "path": "./apps/validator"
+        },
+        {
+            "path": "./apps/web"
+        }
+    ]
+}

@@ -1,0 +1,30 @@
+{
+    "name": "@replyguy/queue",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Queue abstraction for Redis Streams and AWS SQS",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc -w",
+        "check-types": "tsc --noEmit",
+        "lint": "eslint src/",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@replyguy/core": "workspace:*",
+        "ioredis": "^5.3.2",
+        "aws-sdk": "^2.1491.0"
+    },
+    "devDependencies": {
+        "@replyguy/eslint-config": "workspace:*",
+        "@replyguy/typescript-config": "workspace:*",
+        "@types/node": "^20.6.0",
+        "eslint": "^9.28.0",
+        "typescript": "^5.2.2"
+    }
+}

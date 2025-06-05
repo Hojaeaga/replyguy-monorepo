@@ -1,0 +1,15 @@
+---
+description: When agent needs to refer to the documentation.
+globs: 
+alwaysApply: false
+---
+Here the docs of services we will be using:
+
+- https://turborepo.com/docs
+- https://nextjs.org/docs
+- https://docs.neynar.com/docs/getting-started-with-neynar
+- https://miniapps.farcaster.xyz/docs/getting-started
+- https://supabase.com/docs/guides/database/overview
+- https://docs.reclaimprotocol.org/zkfetch/
+
+If there are any missing docs, ask me. DO NOT ASSUME.

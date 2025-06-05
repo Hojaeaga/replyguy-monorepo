@@ -1,5 +1,5 @@
 {
-  "name": "@repo/ui",
+  "name": "@replyguy/ui",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -37,14 +37,10 @@
     "lint": "eslint src/",
     "test": "jest"
   },
-  "jest": {
-    "preset": "@repo/jest-presets/browser"
-  },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
-    "@repo/eslint-config": "*",
-    "@repo/jest-presets": "*",
-    "@repo/typescript-config": "*",
+    "@replyguy/eslint-config": "workspace:*",
+    "@replyguy/typescript-config": "workspace:*",
     "@types/node": "^22.15.3",
     "bunchee": "^6.4.0",
     "eslint": "^9.28.0",

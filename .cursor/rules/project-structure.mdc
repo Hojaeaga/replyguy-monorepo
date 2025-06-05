@@ -1,0 +1,155 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+We need to follow the following project structure:
+
+Here’s a **complete, copy-paste-ready monorepo layout** for ReplyGuy, presented entirely in Markdown.
+
+---
+
+## 📁 Directory tree
+
+<details>
+<summary>Click to expand</summary>
+
+```text
+.
+├── README.md
+├── turbo.json
+├── package.json
+├── .env.example
+├── .gitignore
+│
+├── apps/                              # → Deployable runtime services
+│   ├── ingestion/                     # 1️⃣ Webhook intake → queue
+│   │   ├── src/
+│   │   │   └── index.ts
+│   │   ├── package.json
+│   │   └── Dockerfile
+│   │
+│   ├── worker/                        # 2️⃣ Queue worker → OpenAI etc.
+│   │   ├── src/
+│   │   │   └── index.ts
+│   │   ├── package.json
+│   │   └── Dockerfile
+│   │
+│   ├── validator/                     # 3️⃣ Reclaim zkTLS proof verifier
+│   │   ├── src/
+│   │   │   └── index.ts
+│   │   ├── package.json
+│   │   └── Dockerfile
+│   │
+│   └── web/                           # 4️⃣ Next .js 14 (mini-app-ready)
+│       ├── src/
+│       │   ├── app/
+│       │   │   └── page.tsx
+│       │   └── components/
+│       ├── miniapp.json               # Farcaster Mini-App manifest
+│       ├── next.config.js
+│       ├── tailwind.config.ts
+│       └── package.json
+│
+├── packages/                          # → Re-usable, side-effect-free libs
+│   ├── core/
+│   │   ├── src/                       # Types, logger, errors
+│   │   └── package.json
+│   ├── db/
+│   │   ├── src/                       # Supabase typed queries
+│   │   └── package.json
+│   ├── queue/
+│   │   ├── src/                       # Redis/SQS abstraction
+│   │   └── package.json
+│   ├── reclaim/
+│   │   ├── src/                       # zkfetch helpers
+│   │   └── package.json
+│   ├── farcaster-adapter/
+│   │   ├── src/                       # Neynar I/O & trending cache
+│   │   └── package.json
+│   ├── openai/
+│   │   ├── src/                       # Cost-controlled chat/embeddings
+│   │   └── package.json
+│   ├── ui/
+│   │   ├── src/                       # shadcn/Tailwind components
+│   │   └── package.json
+│   └── config/                        # Shared tooling presets
+│       ├── eslint/
+│       │   └── index.js
+│       ├── prettier/
+│       │   └── .prettierrc.js
+│       ├── tsconfig/
+│       │   └── base.json
+│       └── package.json
+│
+├── infra/                             # IaC (Terraform / CDK, per env)
+│   └── terraform/
+│       └── main.tf
+│
+├── scripts/                           # One-off dev & ops helpers
+│   └── dev.sh
+│
+└── .github/
+    └── workflows/
+        └── ci.yml                     # Lint → test → build → docker
+```
+
+</details>
+
+---
+
+## 🗂️ Top-level files
+
+| File / Dir       | Purpose                                                      |
+| ---------------- | ------------------------------------------------------------ |
+| **turbo.json**   | Turborepo pipeline & cache rules (dev, build, test, docker). |
+| **package.json** | Root scripts (`turbo run …`) plus workspace map.             |
+| **.env.example** | Canonical list of env vars; never commit secrets.            |
+| **README.md**    | Quick-start, architecture diagram, dev commands.             |
+
+---
+
+## 🔌 `apps/*` (deployable services)
+
+| Folder        | Runtime        | Brief description                                                                |
+| ------------- | -------------- | -------------------------------------------------------------------------------- |
+| **ingestion** | Node + Express | Verifies Neynar webhook → pushes job into queue.                                 |
+| **worker**    | Node           | Stateless worker: fetches job → embeddings, OpenAI, similarity search → replies. |
+| **validator** | Node           | Consumes `{payload, proof}` → verifies zkTLS proof with Reclaim → ACK/NACK.      |
+| **web**       | Next .js 14    | Operator dashboard **and** Farcaster Mini-App UI (via `miniapp.json`).           |
+
+---
+
+## 📦 `packages/*` (shared libraries)
+
+| Package               | Highlights                                                             |
+| --------------------- | ---------------------------------------------------------------------- |
+| **core**              | Zod types, pino logger, custom errors.                                 |
+| **db**                | Supabase client with typed queries & migrations.                       |
+| **queue**             | Thin wrapper around Redis Streams **or** AWS SQS; interchangeable.     |
+| **reclaim**           | `zkfetch()` helper → returns `{payload, proof}`.                       |
+| **farcaster-adapter** | Neynar API, trending-cast cache, `postReply()`.                        |
+| **openai**            | GPT client with token counting & cost caps; memoized embeddings.       |
+| **ui**                | shadcn + Tailwind components reused by Next.js pages.                  |
+| **config**            | Central ESLint, Prettier, TS configs so every workspace stays aligned. |
+
+---
+
+## ⚙️ CI / CD
+
+* **GitHub Actions** in `.github/workflows/ci.yml`.
+  Steps: checkout → pnpm install → `turbo build` (leveraging remote cache) → unit tests → optionally build & push Docker images.
+
+---
+
+### 🏁 Ready to run locally
+
+```bash
+pnpm install
+pnpm dev           # turbo run dev → launches all apps in watch-mode
+
+# Or, with Docker Compose
+docker compose up  # brings up Redis, Supabase-local, workers, web
+```
+
+That’s the full scaffold—ready for you to drop code into each service or package and hit the ground running.

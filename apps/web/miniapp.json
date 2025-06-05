@@ -1,0 +1,23 @@
+{
+    "name": "ReplyGuy",
+    "description": "AI-powered intelligent reply system for Farcaster",
+    "version": "1.0.0",
+    "icon": "/icon.png",
+    "url": "https://replyguy.vercel.app",
+    "author": {
+        "name": "ReplyGuy Team",
+        "url": "https://replyguy.vercel.app"
+    },
+    "permissions": [
+        "cast",
+        "profile"
+    ],
+    "features": [
+        "dashboard",
+        "analytics",
+        "settings"
+    ],
+    "frames": {
+        "enabled": true,
+        "version": "vNext"
+    },

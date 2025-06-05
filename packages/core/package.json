@@ -1,0 +1,28 @@
+{
+    "name": "@replyguy/core",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Core utilities, types, and logging for ReplyGuy",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc -w",
+        "check-types": "tsc --noEmit",
+        "lint": "eslint src/",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "pino": "^8.16.0",
+        "zod": "^3.22.4"
+    },
+    "devDependencies": {
+        "@replyguy/eslint-config": "workspace:*",
+        "@replyguy/typescript-config": "workspace:*",
+        "eslint": "^9.28.0",
+        "typescript": "^5.2.2"
+    }
+}
