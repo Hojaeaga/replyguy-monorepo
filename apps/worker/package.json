@@ -17,7 +17,7 @@
         "@replyguy/queue": "workspace:*",
         "@replyguy/db": "workspace:*",
         "@replyguy/openai": "workspace:*",
-        "@replyguy/farcaster-adapter": "workspace:*",
+        "@replyguy/neynar": "workspace:*",
         "dotenv": "^16.3.1"
     },
     "devDependencies": {

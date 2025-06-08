@@ -3,7 +3,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import { config } from 'dotenv';
 import { logger } from '@replyguy/core';
-import { createQueue } from '@replyguy/queue';
+import QueueService from '@replyguy/queue';
 import { DBService } from '@replyguy/db';
 import { NeynarService } from '@replyguy/neynar';
 
@@ -19,7 +19,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 // Initialize queue
-const queue = createQueue({
+const queue = new QueueService({
     redis: {
         url: process.env.REDIS_URL || 'redis://localhost:6379',
     },
@@ -41,7 +41,7 @@ app.get('/health', (req, res) => {
 });
 
 // Webhook endpoint for Neynar
-app.post('/farcaster/webhook/neynar', async (req, res) => {
+app.post('/farcaster/webhook/receiveCast', async (req, res) => {
     try {
         const { body } = req;
         const { type, data: cast } = body;
@@ -51,8 +51,8 @@ app.post('/farcaster/webhook/neynar', async (req, res) => {
             castHash: cast ? { hash: cast.hash } : undefined
         });
 
-        // Filter for cast events that might need replies
-        if (type === 'cast.created') {
+        // Filter for cast events that might need replies and are not empty
+        if (type === 'cast.created' && cast.text !== "") {
             // Push job to queue for processing
             await queue.push('process-cast', {
                 cast: cast,

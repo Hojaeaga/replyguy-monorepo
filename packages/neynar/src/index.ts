@@ -1,4 +1,6 @@
 import axios from "axios";
+import { CastWithInteractions } from "./type";
+import { ReplyCast, ReplyCastResponse } from "@replyguy/core";
 
 export class NeynarService {
 
@@ -83,23 +85,15 @@ export class NeynarService {
         }
     }
 
-    async replyToCast({
-        text,
-        parentHash,
-        embeds,
-    }: {
-        text: string;
-        parentHash: string;
-        embeds?: [{ url: string }];
-    }) {
+    async replyToCast(replyDetails: ReplyCast): Promise<ReplyCastResponse | null> {
         try {
             const res = await axios.post(
                 `${this.NEYNAR_BASE_URL}/cast`,
                 {
                     signer_uuid: this.signerUuid,
-                    text,
-                    parent: parentHash,
-                    embeds,
+                    text: replyDetails.text,
+                    parent: replyDetails.parentHash,
+                    embeds: replyDetails.embeds,
                 },
                 { headers: this.getHeaders() },
             );
@@ -329,39 +323,102 @@ export class NeynarService {
     }
     async fetchCastsForUser(fid: string) {
 
-        const publicOptions = {
-            method: "GET", // or POST
-        };
 
-        const privateOptions = {
-            headers: {
-                "x-api-key": this.neynarApiKey,
-                "Content-Type": "application/json",
-            },
-        };
 
         const url = `${this.NEYNAR_BASE_URL}/feed/user/casts?fid=${fid}&limit=100`;
 
-        let proof: any;
-        let ipfsHash: any;
+        // let proof: any;
+        // let ipfsHash: any;
+        // const publicOptions = {
+        //     method: "GET", // or POST
+        // };
 
+        // const privateOptions = {
+        //     headers: {
+        //         "x-api-key": this.neynarApiKey,
+        //         "Content-Type": "application/json",
+
+        //     },
+        // };
+
+        // try {
+        //     proof = await this.reclaimClient.zkFetch(
+        //         url,
+        //         publicOptions,
+        //         privateOptions,
+        //     );
+        // } catch (err) {
+        //     console.error("fetchCastsForUser error", err);
+        // }
+
+        // if (proof === undefined) {
+        //     return null;
+        // }
+
+        // const castData = JSON.parse(proof.extractedParameterValues.data);
+
+        // const simplifiedCasts = castData.casts.map((cast: any) => ({
+        //     author: cast.author.username,
+        //     fid: cast.author.fid,
+        //     hash: cast.hash,
+        //     text: cast.text,
+        //     timestamp: cast.timestamp,
+        //     channel: cast.channel?.name || null,
+        //     embedUrls: cast.embeds?.map((e: any) => e.url) || [],
+        //     frame: cast.frames?.length
+        //         ? {
+        //             title: cast.frames[0].title,
+        //             buttons: cast.frames[0].buttons?.map((b: any) => b.title) || [],
+        //         }
+        //         : null,
+        //     likes: cast.reactions?.likes_count || 0,
+        //     recasts: cast.reactions?.recasts_count || 0,
+        //     frames:
+        //         cast.frames?.map((f: any) => ({
+        //             title: f.title,
+        //             buttons: f.buttons?.map((b: any) => b.title) || [],
+        //         })) || [],
+        // }));
+
+        // try {
+        //     ipfsHash = await this.ipfsService.publishJSON(proof);
+        //     console.log("ipfsHash", ipfsHash);
+        // } catch (error) {
+        //     console.error("publishJSON error", error);
+        // }
+
+        // try {
+        //     console.log("ipfsHash", ipfsHash);
+
+        //     await this.avs.sendTask(
+        //         ipfsHash,
+        //         proof.claimData.timestampS.toString(),
+        //         0,
+        //     );
+        //     console.log("Sent to AVS Network");
+        // } catch (err) {
+        //     console.error("sendTask error", err);
+        // }
+        let data;
         try {
-            proof = await this.reclaimClient.zkFetch(
+            const res = await axios.get(
                 url,
-                publicOptions,
-                privateOptions,
+                {
+                    method: "GET",
+                    headers: {
+                        "x-api-key": this.neynarApiKey,
+                        "Content-Type": "application/json",
+
+                    },
+                },
             );
+            data = res.data;
+            console.log("data", data);
         } catch (err) {
             console.error("fetchCastsForUser error", err);
         }
 
-        if (proof === undefined) {
-            return null;
-        }
-
-        const castData = JSON.parse(proof.extractedParameterValues.data);
-
-        const simplifiedCasts = castData.casts.map((cast: any) => ({
+        const simplifiedCasts = data.casts.map((cast: CastWithInteractions) => ({
             author: cast.author.username,
             fid: cast.author.fid,
             hash: cast.hash,
@@ -383,26 +440,6 @@ export class NeynarService {
                     buttons: f.buttons?.map((b: any) => b.title) || [],
                 })) || [],
         }));
-
-        try {
-            ipfsHash = await this.ipfsService.publishJSON(proof);
-            console.log("ipfsHash", ipfsHash);
-        } catch (error) {
-            console.error("publishJSON error", error);
-        }
-
-        try {
-            console.log("ipfsHash", ipfsHash);
-
-            await this.avs.sendTask(
-                ipfsHash,
-                proof.claimData.timestampS.toString(),
-                0,
-            );
-            console.log("Sent to AVS Network");
-        } catch (err) {
-            console.error("sendTask error", err);
-        }
 
         return simplifiedCasts;
     }

@@ -1,5 +1,3 @@
-import { config } from 'dotenv';
-import { logger } from '@replyguy/core'
 import { Embeddings, AIProcessingResponse } from '@replyguy/core';
 
 async function getCastEmbeddings(cast_text: string): Promise<Embeddings> {
@@ -9,13 +7,25 @@ async function getCastEmbeddings(cast_text: string): Promise<Embeddings> {
 }
 
 async function sendDataToAIProcessing(data: any): Promise<AIProcessingResponse> {
+    // TODO: Fetch data from the Python service
     return {
         needsReply: {
             status: true,
             confidence: 0.8,
             reason: 'No question detected'
         },
-        replyText: 'Hello, world!'
+        replyText: 'Hello, world!',
+        embeds: [
+            {
+                cast_id: {
+                    fid: 14582,
+                    hash: '0x123'
+                }
+            },
+            {
+                url: 'https://www.replyguy.megabyte0x.xyz'
+            }
+        ]
     };
 }
 

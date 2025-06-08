@@ -144,15 +144,45 @@ export interface ProofEvent {
 // Add core types here
 export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 
-export interface AIProcessingResponse {
+export type Embeds = [
+    {
+        cast_id: {
+            fid: number;
+            hash: string;
+        }
+    },
+    {
+        url: string;
+    }
+]
+
+export type ReplyCast = {
+    text: string;
+    parentHash: string;
+    embeds: Embeds;
+}
+
+export type AIProcessingResponse = {
     needsReply: {
         status: boolean;
         confidence: number;
         reason: string | null | undefined;
     };
     replyText: string;
+    embeds: Embeds;
 }
 
-export interface Embeddings {
+export type Embeddings = {
     embeddings: number[];
+}
+
+export type ReplyCastResponse = {
+    success: boolean;
+    cast: {
+        hash: string;
+        author: {
+            fid: number;
+        },
+        text: string;
+    }
 }

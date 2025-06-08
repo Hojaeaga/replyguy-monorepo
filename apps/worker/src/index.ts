@@ -1,16 +1,16 @@
 import { config } from 'dotenv';
-import { logger } from '@replyguy/core';
-import { createQueue } from '@replyguy/queue';
-import { getCastEmbeddings, sendDataToAIProcessing } from '@replyguy/openai';
+import { logger, ReplyCast } from '@replyguy/core';
+import QueueService from '@replyguy/queue';
+import { sendDataToAIProcessing } from '@replyguy/openai';
 import { NeynarService } from '@replyguy/neynar';
 
-import { createDBClient } from '@replyguy/db';
+import { DBService } from '@replyguy/db';
 
 // Load environment variables
 config();
 
 // Initialize clients
-const queue = createQueue({
+const queue = new QueueService({
     redis: {
         url: process.env.REDIS_URL || 'redis://localhost:6379',
     },
@@ -21,52 +21,70 @@ const neynar = new NeynarService(
     process.env.NEYNAR_SIGNER_UUID!,
 );
 
-const db = createDBClient({
-    supabaseUrl: process.env.SUPABASE_URL!,
-    supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-});
+const db = new DBService(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 // Worker job processor
 async function processCast(job: any) {
+
+    const cast = job.data;
+    const parentHash = cast.parent_hash;
+    const newParentHash = cast.hash;
+    logger.info('Processing cast', { castHash: newParentHash });
+
+    const { data: existingReply } = await db.isCastReplyExists(newParentHash);
+
+    if (existingReply) {
+        logger.info('Cast already replied to', { castHash: newParentHash });
+        return;
+    }
+
+    if (parentHash) {
+        logger.info('Cast is a reply, skipping', { castHash: newParentHash });
+        return;
+    }
+
+    const isSubscribed = await db.isSubscribed(cast.author.fid);
+
+    if (!isSubscribed) {
+        logger.info('User is not subscribed, skipping', { castHash: newParentHash, fid: cast.author.fid });
+        return;
+    }
+
+
     try {
-        const cast = job.data;
-
-        logger.info('Processing cast', { castHash: cast.hash });
-
         const receivedData = await sendDataToAIProcessing(cast);
 
-        const { needsReply, replyText } = receivedData;
+        const { needsReply, replyText, embeds } = receivedData;
 
 
         if (needsReply.status) {
 
-
-            // 5. Post reply via Farcaster
-            const replyResult = await neynar.replyToCast({
+            const replyDetails: ReplyCast = {
                 text: replyText,
-                parentHash: cast.hash,
-            });
+                parentHash: newParentHash,
+                embeds: embeds,
+            };
 
-            // 6. Store interaction in database
-            await db.storeInteraction({
-                originalCast: cast.hash,
-                replyHash: replyResult.hash,
-                replyText,
-                confidence: needsReply.confidence,
-                timestamp: new Date(),
-            });
+            const replyResult = await neynar.replyToCast(replyDetails);
+
+            if (!replyResult) {
+                logger.error('Failed to reply to cast', { castHash: newParentHash });
+                return;
+            }
+
+            await db.addCastReply(newParentHash, replyResult.cast.hash);
 
             logger.info('Reply posted', {
-                castHash: cast.hash,
-                replyHash: replyResult.hash,
+                castHash: newParentHash,
+                replyHash: replyResult.cast.hash,
                 confidence: needsReply.confidence
             });
         } else {
-            logger.info('No reply needed', { castHash: cast.hash, reason: needsReply.reason });
+            logger.info('No reply needed', { castHash: newParentHash, reason: needsReply.reason });
         }
 
     } catch (error) {
-        logger.error('Error processing cast', { error, castHash: job.data.castHash });
+        logger.error('Error processing cast', { error, castHash: newParentHash });
         throw error;
     }
 }
