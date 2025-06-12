@@ -6,6 +6,7 @@ import { logger } from '@replyguy/core';
 import QueueService from '@replyguy/queue';
 import { DBService } from '@replyguy/db';
 import { NeynarService } from '@replyguy/neynar';
+import { UserService } from '@replyguy/user';
 
 // Load environment variables
 config();
@@ -18,7 +19,7 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Initialize queue
+// Initialize services
 const queue = new QueueService({
     redis: {
         url: process.env.REDIS_URL || 'redis://localhost:6379',
@@ -35,9 +36,23 @@ const neynar = new NeynarService(
     process.env.NEYNAR_SIGNER_UUID!,
 );
 
+
+const userService = new UserService(db, neynar, "");
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', service: 'ingestion', timestamp: new Date().toISOString() });
+});
+
+app.post('/user/register', async (req, res) => {
+    try {
+        const { fid } = req.body;
+        const result = await userService.registerUser(fid);
+        res.json(result);
+    } catch (error) {
+        logger.error('Error registering user', error);
+        res.status(500).json({ success: false, error: 'Failed to register user' });
+    }
 });
 
 // Webhook endpoint for Neynar

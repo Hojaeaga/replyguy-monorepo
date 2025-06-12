@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import { logger, ReplyCast } from '@replyguy/core';
 import QueueService from '@replyguy/queue';
-import { sendDataToAIProcessing } from '@replyguy/openai';
+import { sendDataToAIProcessing } from '@replyguy/ai_service';
 import { NeynarService } from '@replyguy/neynar';
 
 import { DBService } from '@replyguy/db';
