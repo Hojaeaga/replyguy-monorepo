@@ -1,4 +1,5 @@
 import os
+import json
 
 import pytest
 
@@ -54,6 +55,18 @@ MOCK_TRENDING_CASTS = {
             "timestamp": "2024-03-15T11:00:00Z",
             "reactions": {"likes": 1000, "recasts": 200},
             "replies": {"count": 100},
+            "engagement": 1300  # Adding engagement score (likes + recasts + replies)
+        },
+        {
+            "hash": "0xdef...789",
+            "thread_hash": "0xabc...def",
+            "parent_hash": None,
+            "author": {"fid": 67891, "username": "another_user"},
+            "text": "Just launched my first AI-powered dApp! #Web3 #AI",
+            "timestamp": "2024-03-15T12:00:00Z",
+            "reactions": {"likes": 500, "recasts": 100},
+            "replies": {"count": 50},
+            "engagement": 650
         }
     ]
 }
@@ -119,25 +132,37 @@ async def test_embeddings_workflow():
 async def test_trending_galaxy_workflow(mock_trending_casts):
     """Test trending galaxy workflow with real or mock OpenAI"""
     workflow = TrendingGalaxyWorkflow()
-    print("\nRunning Trending Galaxy Workflow...", mock_trending_casts.get("casts", []))
-    # Create test input with the correct format
+    
+    # Create test input with the correct format for generate_trending_clusters
     test_input = {
-        "casts": mock_trending_casts.get("casts", []),  # Pass just the casts list
-        "user_embedding": [0.1] * 1536,  # Pass embedding at top level
+        "casts": mock_trending_casts.get("casts", []),  # Raw casts list
+        "user_embedding": [0.1] * 1536,  # User's embedding vector
         "user_summary": {
             "keywords": ["AI", "Web3", "Social"],
             "raw_summary": "Test user interested in AI and Web3",
-        },
-        "topics": [["AI", "ML", "Technology"]],  # Mock LLM response for topics
+        }
     }
+
+    print("\nTest input casts:", json.dumps(test_input["casts"], indent=2))  # Debug print
 
     # Run workflow
     result = await workflow.run(test_input)
+    
+    print("\nWorkflow result:", json.dumps(result, indent=2))  # Debug print
 
     # Verify result
     assert "trending_clusters" in result
     assert "matched_clusters" in result
     assert "viral_suggestions" in result
+
+    # Additional assertions to verify cluster structure
+    for cluster in result["trending_clusters"]:
+        assert "topic" in cluster
+        assert "embedding" in cluster
+        assert "casts" in cluster
+        assert isinstance(cluster["casts"], list)
+        for cast in cluster["casts"]:
+            assert "engagement" in cast
 
     if USE_REAL_OPENAI:
         print("\nReal OpenAI Trending Galaxy Results:")
