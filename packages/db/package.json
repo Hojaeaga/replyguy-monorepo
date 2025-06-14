@@ -6,8 +6,8 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsup",
-        "dev": "tsup --watch",
+        "build": "tsup src/index.ts --format cjs,esm --dts",
+        "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
         "check-types": "tsc --noEmit",
         "lint": "eslint src/",
         "test": "jest"
