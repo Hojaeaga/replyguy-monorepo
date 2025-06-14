@@ -145,7 +145,8 @@ async function processCast(job: any) {
       if (
         replyDetails.text === "No relevant content found" ||
         replyDetails.text === "No response generated" ||
-        replyDetails.text === ""
+        replyDetails.text === "" ||
+        replyDetails.embeds[0].url === ""
       ) {
         logger.info("No relevant content found for reply", {
           castHash,
