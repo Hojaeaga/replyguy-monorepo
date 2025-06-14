@@ -11,7 +11,7 @@ import { AIProcessingResponse, Cast } from "@replyguy/core";
 const AI_AGENT_BASE_URL = process.env.AI_AGENT_URL || "http://localhost:8001";
 
 export class AIService {
-  constructor() { }
+  constructor() {}
 
   async summarizeUserContext(
     userData: UserSummaryRequest["user_data"],
@@ -88,7 +88,8 @@ export class AIService {
           input_data: text,
         },
       );
-      return response.data.embeddings;
+      // @ts-ignore
+      return response.data.embedding.vector;
     } catch (err: unknown) {
       console.error(
         "generateEmbeddings error",
