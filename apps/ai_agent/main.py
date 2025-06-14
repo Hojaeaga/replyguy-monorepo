@@ -65,9 +65,7 @@ async def generate_reply(request: Dict) -> Dict:
 async def generate_embedding(request: Dict) -> Dict:
     """Generate embeddings for input text"""
     try:
-        result = await embeddings_workflow.process(
-            {"input_data": request["input_data"]}
-        )
+        result = await embeddings_workflow.run({"input_data": request["input_data"]})
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
