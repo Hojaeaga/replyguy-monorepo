@@ -1,0 +1,60 @@
+{
+  "info": {
+    "name": "Reply Guy API",
+    "description": "API collection for the Reply Guy service that provides user summaries and embeddings",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get User Summary",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_data\": {\n    \"username\": \"test_user\",\n    \"bio\": \"Testing OpenAI API calls\",\n    \"recent_casts\": [\"This is a test cast\"],\n    \"interests\": [\"testing\", \"AI\"],\n    \"engagement_stats\": {\n      \"avg_replies\": 1,\n      \"avg_likes\": 1,\n      \"top_channels\": [\"test\"]\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/user-summary",
+          "host": ["{{base_url}}"],
+          "path": ["user-summary"]
+        },
+        "description": "Generate a summary and embedding for a user based on their profile data"
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "originalRequest": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_data\": {\n    \"username\": \"test_user\",\n    \"bio\": \"Testing OpenAI API calls\",\n    \"recent_casts\": [\"This is a test cast\"],\n    \"interests\": [\"testing\", \"AI\"],\n    \"engagement_stats\": {\n      \"avg_replies\": 1,\n      \"avg_likes\": 1,\n      \"top_channels\": [\"test\"]\n    }\n  }\n}"
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"user_summary\": {\n    \"keywords\": [\"testing\", \"AI\", \"OpenAI\"],\n    \"raw_summary\": \"User interested in testing and AI technologies\"\n  },\n  \"user_embedding\": {\n    \"vector\": [...]\n  }\n}"
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ]
+} 
