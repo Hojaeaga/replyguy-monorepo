@@ -77,7 +77,14 @@ async def generate_embedding(request: Dict) -> Dict:
 async def galaxy_trending(request: Dict) -> Dict:
     """Process trending cast galaxy from user feed"""
     try:
-        result = await trending_galaxy_workflow.run(request["casts"])
+        casts = request.get("casts", [])
+        user_summary = request.get("user_summary", {})
+
+        inputs = {
+            "casts": casts,
+            "user_summary": user_summary,
+        }
+        result = await trending_galaxy_workflow.run(inputs)
         return {"status": "success", "data": result}
     except Exception as e:
         return {"status": "error", "message": str(e)}
