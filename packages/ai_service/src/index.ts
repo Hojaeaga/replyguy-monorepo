@@ -3,7 +3,6 @@ import {
   UserSummaryRequest,
   UserSummaryResponse,
   GenerateReplyRequest,
-  GenerateReplyResponse,
   GenerateEmbeddingResponse,
 } from "./types";
 import { AIProcessingResponse } from "@replyguy/core";
@@ -39,14 +38,17 @@ export class AIService {
     trendingFeeds,
   }: GenerateReplyRequest): Promise<AIProcessingResponse | string> {
     try {
-      const response = await axios.post(`${AI_AGENT_BASE_URL}/api/generate-reply`, {
-        cast,
-        similarUserFeeds,
-        trendingFeeds,
-      });
-  
+      const response = await axios.post(
+        `${AI_AGENT_BASE_URL}/api/generate-reply`,
+        {
+          cast,
+          similarUserFeeds,
+          trendingFeeds,
+        },
+      );
+
       const data = response.data;
-  
+
       const result: AIProcessingResponse = {
         needsReply: {
           status: data.intent_analysis.should_reply,
@@ -54,12 +56,15 @@ export class AIService {
           reason: data.intent_analysis.identified_needs?.[0] ?? "",
         },
         replyText: data.reply.reply_text,
-        embeds: data.reply.link
+        embeds: data.reply.link,
       };
-  
+
       return result;
     } catch (err: unknown) {
-      console.error("generateReplyForCast error", err instanceof Error ? err.message : err);
+      console.error(
+        "generateReplyForCast error",
+        err instanceof Error ? err.message : err,
+      );
       return "Sorry, I couldn't generate a reply at the moment.";
     }
   }
@@ -82,4 +87,3 @@ export class AIService {
     }
   }
 }
-
