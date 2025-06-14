@@ -78,7 +78,7 @@ async def extract_topics_llm(state: Dict[str, Any]) -> Dict[str, Any]:
     messages = [
         {
             "role": "system",
-            "content": "Extract 1–3 relevant, short, high-level topics per post.",
+            "content": "You are a JSON API that extracts topics from social media posts. Return a JSON object with an array of topics for each post.",
         },
         {"role": "user", "content": json.dumps(texts, indent=2)},
     ]
@@ -92,7 +92,7 @@ async def extract_topics_llm(state: Dict[str, Any]) -> Dict[str, Any]:
                 "topics": {
                     "type": "array",
                     "items": {
-                        "type": "array",  # list of strings per cast
+                        "type": "array",
                         "items": {"type": "string"},
                     },
                 }
