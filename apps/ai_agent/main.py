@@ -65,7 +65,10 @@ async def generate_reply(request: Dict) -> Dict:
 async def generate_embedding(request: Dict) -> Dict:
     """Generate embeddings for input text"""
     try:
-        result = await embeddings_workflow.run({"input_data": request["input_data"]})
+        if "input_data" not in request:
+            raise HTTPException(status_code=400, detail="Missing input_data field")
+        text = request["input_data"]
+        result = await embeddings_workflow.run(text)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
