@@ -141,7 +141,7 @@ If the selected content has a channel_name, append "Join the conversation in the
 IMPORTANT:
 1. NEVER generate new content - use ONLY the exact content from selected_content
 2. The reply MUST follow the format: "You should connect with [author_username], who said: '[content]'"
-3. If selected_content is empty or has no meaningful content, return the default "No relevant content found" message
+3. If selected_content is empty or has no meaningful content, return the default "No relevant content found" only no changing this message 
 4. The [content] must be the exact content from the selected feed, not a summary or rephrasing
 """
 
