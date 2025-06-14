@@ -57,34 +57,58 @@ export class UserService {
   private async registerNewUser(fid: string, alreadySubscribedFIDs: string[]) {
     const userData = await this.neynar.aggregateUserData(fid);
     const userContext = await this.aiService.summarizeUserContext(userData);
-    if (!userContext) {
-      throw new Error("Failed to summarize user context");
-    }
+
+    if (!userContext) throw new Error("Failed to summarize user context");
+
     const {
-      user_summary: {
-        keywords:summary,
-      },
-      user_embeddings: {
-        vector:embeddings,
-      },
+      user_summary: { raw_summary, keywords },
+      user_embeddings: { vector: embeddings },
     } = userContext;
 
-
-    const { success } = await this.db.registerAndSubscribeFID(
-      fid,
-      summary,
-      embeddings,
-    );
-    if (!success) {
-      throw new Error("User registration failed");
+    // Insert raw summary
+    const profileExists = await this.db.checkIfUserProfileExists(fid);
+    if (!profileExists) {
+      const result = await this.db.insertUserProfile(fid, raw_summary);
+      if (!result.success)
+        console.warn("Failed to insert profile", result.error);
     }
 
+    // Insert keywords
+    const keywordsExist = await this.db.checkIfUserKeywordsExist(fid);
+    if (!keywordsExist) {
+      const result = await this.db.insertUserKeywords(fid, keywords);
+      if (!result.success)
+        console.warn("Failed to insert keywords", result.error);
+    }
+
+    // Insert user embeddings
+    const embeddingExists = await this.db.checkIfUserEmbeddingExists(fid);
+    if (!embeddingExists) {
+      const result = await this.db.insertUserEmbedding(fid, embeddings);
+      if (!result.success)
+        console.warn("Failed to insert embedding", result.error);
+    }
+
+    // Insert edges (we assume similarity edges can be updated every time)
+    const edgeResult = await this.db.insertUserSimilarityEdges(fid, embeddings);
+    if (!edgeResult.success)
+      console.warn("Failed to insert similarity edges", edgeResult.error);
+
+    // Register in main embedding table (idempotent insert)
+    const alreadyRegistered = await this.db.isRegistered(Number(fid));
+    if (!alreadyRegistered.registered) {
+      const regResult = await this.db.registerAndSubscribeFID(
+        fid,
+        keywords,
+        embeddings,
+      );
+      if (!regResult.success) throw new Error("User registration failed");
+    }
+
+    // Update webhook
     const newSubscribedUserIds = [...alreadySubscribedFIDs, fid];
-    await this.neynar.updateWebhook({
-      updatedFids: newSubscribedUserIds,
-    });
+    await this.neynar.updateWebhook({ updatedFids: newSubscribedUserIds });
 
     return { success: true, data: `User ${fid} subscribed` };
   }
 }
-

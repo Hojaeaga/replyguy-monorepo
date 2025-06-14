@@ -4,11 +4,18 @@ Centralized prompt management for the AI service
 
 # User Summary Workflow
 USER_SUMMARY_PROMPT = """
-Analyze the following user data and extract key information about their interests, expertise, and engagement patterns.
-Focus on identifying topics they frequently engage with and their level of expertise in different areas.
-Please analyze the provided user data and return a JSON response with:
-- keywords: A list of key terms that represent the user's interests and activities
-- raw_summary: A brief summary of the user's profile and behavior
+You are an AI analyst building a profile of a Farcaster user based on their activity.
+
+Analyze the following user data and extract structured insights about their interests, tone, and behavior.
+
+Return a JSON object with the following fields:
+
+- "keywords": A list of key topics or themes the user engages with, sorted by relevance. Format: [{ "topic": string, "weight": float }]
+- "tone": A few words describing the tone or personality expressed in their posts (e.g., "funny", "technical", "curious").
+- "channels": List of Farcaster channels they actively participate in.
+- "raw_summary": A short paragraph summarizing what this user talks about and cares about.
+
+Only respond with a valid JSON object.
 
 User Data:
 {user_data}

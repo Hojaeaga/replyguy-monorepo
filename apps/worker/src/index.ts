@@ -28,73 +28,72 @@ const db = new DBService(
 const aiService = new AIService();
 
 // Worker job processor
+
 async function processCast(job: any) {
   const cast = job.data;
   const parentHash = cast.parent_hash;
   const newParentHash = cast.hash;
   logger.info("Processing cast", { castHash: newParentHash });
 
+  // 1. Skip replies or already-processed
   const { data: existingReply } = await db.isCastReplyExists(newParentHash);
-
-  if (existingReply) {
-    logger.info("Cast already replied to", { castHash: newParentHash });
-    return;
-  }
-
-  if (parentHash) {
-    logger.info("Cast is a reply, skipping", { castHash: newParentHash });
-    return;
-  }
-
-  const isSubscribed = await db.isSubscribed(cast.author.fid);
-
-  if (!isSubscribed) {
-    logger.info("User is not subscribed, skipping", {
+  if (existingReply || parentHash) {
+    logger.info("Cast is a reply or already replied to", {
       castHash: newParentHash,
-      fid: cast.author.fid,
     });
     return;
   }
 
+  // 2. Ensure author is subscribed
+  const isSubscribed = await db.isSubscribed(cast.author.fid);
+  if (!isSubscribed) {
+    logger.info("User not subscribed, skipping", { castHash: newParentHash });
+    return;
+  }
+
   try {
+    // 3. Generate embeddings for this cast
     const castEmbeddings = await aiService.generateEmbeddings(cast.text);
-    if (!castEmbeddings) {
-      logger.error("Failed to generate cast embeddings", {
-        castHash: newParentHash,
-      });
-      return;
-    }
-    const { data: similarUsers, error: similarityError } =
-      await db.fetchSimilarFIDs(castEmbeddings, 0.4, 3);
-    if (similarityError || !similarUsers) {
-      throw new Error("Error finding similar users");
-    }
+    if (!castEmbeddings) throw new Error("Failed to generate cast embeddings");
 
-    const similarUserMap: any = {};
-    for (const user of similarUsers) {
-      if (cast.author.fid === user.fid) {
-        continue;
-      }
-      similarUserMap[user.fid] = {
-        summary: user.summary,
-      };
-    }
-
-    const userFeedPromises = Object.keys(similarUserMap).map(
-      async (similarFid) => {
-        const userData =
-          await neynar.fetchCastsForUserData(similarFid);
-        return { userData, summary: similarUserMap[similarFid].summary };
-      },
+    // 4. Match cast to similar users (NEW)
+    const similarUsersToCast = await db.fetchSimilarUsersToCast(
+      castEmbeddings,
+      0.6,
+      5,
     );
+
+    const similarUserMap = similarUsersToCast.reduce(
+      (acc, user) => {
+        if (user.fid !== cast.author.fid) {
+          acc[user.fid] = { summary: user.summary };
+        }
+        return acc;
+      },
+      {} as Record<string, { summary: string }>,
+    );
+
+    // 5. Fetch relevant feeds
+    const userFeedPromises = Object.keys(similarUserMap).map(async (fid) => {
+      const userData = await neynar.fetchCastsForUserData(fid);
+      return { userData, summary: similarUserMap[fid].summary };
+    });
+
     const similarUserFeeds = await Promise.all(userFeedPromises);
     const trendingFeeds = await neynar.fetchTrendingFeeds();
 
+    // 6. Generate reply using AI
     const receivedData = await aiService.generateReplyForCast({
       cast,
       similarUserFeeds,
       trendingFeeds,
     });
+    if (!receivedData || typeof receivedData === "string") {
+      logger.error("Failed to generate reply for cast", {
+        castHash: newParentHash,
+      });
+      return;
+    }
 
     const { needsReply, replyText, embeds } = receivedData;
 
@@ -113,7 +112,6 @@ async function processCast(job: any) {
       }
 
       await db.addCastReply(newParentHash, replyResult.cast.hash);
-
       logger.info("Reply posted", {
         castHash: newParentHash,
         replyHash: replyResult.cast.hash,
@@ -125,6 +123,8 @@ async function processCast(job: any) {
         reason: needsReply.reason,
       });
     }
+
+    await db.updateUserSimilarityFromCast(cast.author.fid, similarUsersToCast);
   } catch (error) {
     logger.error("Error processing cast", { error, castHash: newParentHash });
     throw error;
@@ -159,4 +159,3 @@ startWorker().catch((error) => {
   logger.error("Failed to start worker", error);
   process.exit(1);
 });
-
