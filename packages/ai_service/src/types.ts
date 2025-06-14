@@ -1,8 +1,6 @@
-import { AIProcessingResponse, Cast, Embeddings } from '@replyguy/core';
+import { AIProcessingResponse, Cast, Embeddings } from "@replyguy/core";
 
-export interface UserData {
-
-}
+export interface UserData {}
 
 export interface Feed {
   text: string;
@@ -13,7 +11,7 @@ export interface Feed {
 }
 
 export interface GenerateReplyRequest {
-  cast: Cast,
+  cast: Cast;
   cast_summary: string;
   similarUserFeeds: Array<{
     text: string;
@@ -44,6 +42,13 @@ export interface UserSummaryRequest {
 }
 
 export interface UserSummaryResponse {
-  keywords: string[];
-  raw_summary: string;
-} 
+  user_summary: {
+    keywords: string[];
+    raw_summary: string;
+  };
+  user_embeddings: {
+    vector: number[];
+    dimensions: number;
+  };
+}
+

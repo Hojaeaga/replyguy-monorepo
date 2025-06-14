@@ -56,15 +56,19 @@ export class UserService {
 
   private async registerNewUser(fid: string, alreadySubscribedFIDs: string[]) {
     const userData = await this.neynar.aggregateUserData(fid);
-    const summary = await this.aiService.summarizeUserContext(userData);
-    if (!summary) {
-      throw new Error("Summary generation failed");
+    const userContext = await this.aiService.summarizeUserContext(userData);
+    if (!userContext) {
+      throw new Error("Failed to summarize user context");
     }
+    const {
+      user_summary: {
+        keywords:summary,
+      },
+      user_embeddings: {
+        vector:embeddings,
+      },
+    } = userContext;
 
-    const embeddings = await this.aiService.generateEmbeddings(summary);
-    if (!embeddings) {
-      throw new Error("Embedding generation failed");
-    }
 
     const { success } = await this.db.registerAndSubscribeFID(
       fid,
