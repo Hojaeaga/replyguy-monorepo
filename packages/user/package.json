@@ -10,7 +10,7 @@
   "dependencies": {
     "@replyguy/db": "workspace:*",
     "@replyguy/neynar": "workspace:*",
-    "@replyguy/ai": "workspace:*"
+    "@replyguy/ai_service": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.0.0"
