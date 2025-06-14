@@ -73,14 +73,14 @@ async def generate_cast_embeddings(state: Dict[str, Any]) -> Dict[str, Any]:
 async def extract_topics_llm(state: Dict[str, Any]) -> Dict[str, Any]:
     """Extract topics per cast using an LLM"""
     casts = state["casts"]
-    
+
     # Ensure casts is a list
     if isinstance(casts, str):
         try:
             casts = json.loads(casts)
         except json.JSONDecodeError:
             raise ValueError("casts must be a list of objects or a valid JSON string")
-    
+
     # Extract text from each cast
     texts = []
     for cast in casts:
@@ -92,12 +92,12 @@ async def extract_topics_llm(state: Dict[str, Any]) -> Dict[str, Any]:
     messages = [
         {
             "role": "system",
-            "content": "You are a JSON API that extracts topics from social media posts. Return a JSON object with an array of topics for each post."
+            "content": "You are a JSON API that extracts topics from social media posts. Return a JSON object with an array of topics for each post.",
         },
         {
             "role": "user",
-            "content": f"Extract topics from these posts and return them in a JSON array format:\n{json.dumps(texts, indent=2)}"
-        }
+            "content": f"Extract topics from these posts and return them in a JSON array format:\n{json.dumps(texts, indent=2)}",
+        },
     ]
 
     response = await get_structured_response(
@@ -108,14 +108,11 @@ async def extract_topics_llm(state: Dict[str, Any]) -> Dict[str, Any]:
             "properties": {
                 "topics": {
                     "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {"type": "string"}
-                    }
+                    "items": {"type": "array", "items": {"type": "string"}},
                 }
             },
-            "required": ["topics"]
-        }
+            "required": ["topics"],
+        },
     )
 
     state["topics"] = response["topics"]

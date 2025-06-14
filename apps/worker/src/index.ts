@@ -142,7 +142,17 @@ async function processCast(job: any) {
         parentHash: castHash,
         embeds,
       };
-
+      if (
+        replyDetails.text === "No relevant content found" ||
+        replyDetails.text === "No response generated" ||
+        replyDetails.text === ""
+      ) {
+        logger.info("No relevant content found for reply", {
+          castHash,
+          reason: needsReply.reason,
+        });
+        return;
+      }
       // Post reply
       let replyResult;
       try {
