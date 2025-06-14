@@ -1,11 +1,26 @@
 {
   "name": "@replyguy/user",
   "version": "1.0.0",
+  "private": true,
+  "description": "User management utilities for ReplyGuy",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc -w"
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src/",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@replyguy/db": "workspace:*",
@@ -13,6 +28,8 @@
     "@replyguy/ai_service": "workspace:*"
   },
   "devDependencies": {
+    "@replyguy/config": "workspace:*",
+    "eslint": "^9.28.0",
     "typescript": "^5.0.0"
   }
-} 
+}

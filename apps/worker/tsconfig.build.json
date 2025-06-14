@@ -1,7 +1,6 @@
 {
-    "extends": "../../packages/config/tsconfig/base.json",
+    "extends": "../../packages/config/tsconfig/node.json",
     "compilerOptions": {
-        "noEmit": true,
         "rootDir": "./src",
         "outDir": "./dist",
         "types": [
@@ -13,6 +12,8 @@
     ],
     "exclude": [
         "dist",
-        "node_modules"
+        "node_modules",
+        "**/*.test.ts",
+        "**/*.spec.ts"
     ]
 }

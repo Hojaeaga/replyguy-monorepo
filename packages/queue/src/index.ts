@@ -1,8 +1,10 @@
 import Redis from 'ioredis';
-import { logger } from '@replyguy/core';
+import { createLogger } from '@replyguy/core';
 import { QueueOptions } from './types';
 
 export * from './types';
+
+const logger = createLogger("queue");
 
 // Define the structure of Redis XREADGROUP response for type safety
 type RedisStreamMessage = [string, string[][]]; // [streamName, [[messageId, [field, value]]]]
@@ -67,10 +69,32 @@ class QueueService {
                                         const jsonData = fields[i + 1];
                                         try {
                                             const data = JSON.parse(jsonData);
+                                            logger.debug(`Processing message ${id}`, {
+                                                messageId: id,
+                                                dataKeys: Object.keys(data),
+                                                queueKey
+                                            });
+
                                             await processor({ id, data });
                                             await this.redis.xack(queueKey, consumerGroup, id);
+
+                                            logger.debug(`Successfully processed message ${id}`, { messageId: id });
                                         } catch (err) {
-                                            logger.error(`Error processing message ${id}`, err);
+                                            const errorMessage = err instanceof Error ? err.message : String(err);
+                                            const errorStack = err instanceof Error ? err.stack : undefined;
+
+                                            logger.error(`Error processing message ${id}: ${errorMessage}`, {
+                                                messageId: id,
+                                                error: errorMessage,
+                                                errorStack,
+                                                queueKey,
+                                                consumerGroup,
+                                                consumerName,
+                                                dataPreview: jsonData.substring(0, 200) + '...'
+                                            });
+
+                                            // Don't acknowledge failed messages so they can be retried
+                                            // TODO: Implement dead letter queue after X retries
                                         }
                                         break;
                                     }

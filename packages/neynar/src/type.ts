@@ -124,13 +124,13 @@ const BaseEmbeddedCastSchema = z.object({
     channel: DehydratedChannelSchema.optional().nullable(),
 });
 
-export const EmbeddedCastSchema = BaseEmbeddedCastSchema.extend({
+export const EmbeddedCastSchema: z.ZodType<any> = BaseEmbeddedCastSchema.extend({
     embeds: z.lazy(() => z.array(EmbedSchema)),
 });
 
 export type EmbeddedCast = z.infer<typeof EmbeddedCastSchema>;
 
-export const EmbedSchema = z.lazy(() =>
+export const EmbedSchema: z.ZodType<any> = z.lazy(() =>
     z.union([
         z.object({
             cast_id: EmbedCastIdSchema,

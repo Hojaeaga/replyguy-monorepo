@@ -3,7 +3,8 @@
   "ui": "tui",
   "globalDependencies": [
     "turbo.json",
-    "package.json"
+    "package.json",
+    "tsconfig.json"
   ],
   "concurrency": "15",
   "tasks": {
@@ -36,14 +37,12 @@
     },
     "lint": {
       "dependsOn": [
-        "^build",
-        "^lint"
+        "^build"
       ]
     },
     "check-types": {
       "dependsOn": [
-        "^build",
-        "^check-types"
+        "^build"
       ]
     },
     "dev": {
@@ -53,17 +52,8 @@
       "cache": false,
       "persistent": true
     },
-    "dev:packages": {
-      "dependsOn": [],
-      "cache": false,
-      "persistent": true
-    },
-    "dev:apps": {
-      "dependsOn": [
-        "^build"
-      ],
-      "cache": false,
-      "persistent": true
+    "clean": {
+      "cache": false
     },
     "@replyguy/worker#dev": {
       "dependsOn": [
@@ -71,7 +61,8 @@
         "@replyguy/core#build",
         "@replyguy/db#build",
         "@replyguy/queue#build",
-        "@replyguy/ai_service#build"
+        "@replyguy/ai_service#build",
+        "@replyguy/user#build"
       ],
       "cache": false,
       "persistent": true
@@ -81,13 +72,9 @@
         "@replyguy/neynar#build",
         "@replyguy/core#build",
         "@replyguy/db#build",
-        "@replyguy/queue#build"
+        "@replyguy/queue#build",
+        "@replyguy/user#build"
       ],
-      "cache": false,
-      "persistent": true
-    },
-    "@replyguy/ai-agent#dev": {
-      "dependsOn": [],
       "cache": false,
       "persistent": true
     }
