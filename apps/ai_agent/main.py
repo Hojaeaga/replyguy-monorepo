@@ -6,10 +6,11 @@ from typing import Dict
 
 from fastapi import FastAPI, HTTPException
 
+from app.prompts import CAST_SUMMARY_PROMPT
 from app.workflows.embeddings import EmbeddingsWorkflow
+from app.workflows.galaxy_trending import TrendingGalaxyWorkflow
 from app.workflows.reply_generation import ReplyGenerationWorkflow
 from app.workflows.user_summary import UserSummaryWorkflow
-from app.prompts import CAST_SUMMARY_PROMPT
 
 app = FastAPI(
     title="AI Reply Service",
@@ -21,6 +22,7 @@ app = FastAPI(
 user_summary_workflow = UserSummaryWorkflow()
 reply_workflow = ReplyGenerationWorkflow()
 embeddings_workflow = EmbeddingsWorkflow()
+trending_galaxy_workflow = TrendingGalaxyWorkflow()
 
 
 @app.post("/api/user-summary")
@@ -39,7 +41,7 @@ async def generate_reply(request: Dict) -> Dict:
     try:
         # First generate a summary of the cast
         cast_summary = await generate_cast_summary(request["cast"]["text"])
-        
+
         # Combine similar and trending feeds into available_feeds
         available_feeds = []
         if "similarUserFeeds" in request:
@@ -51,7 +53,7 @@ async def generate_reply(request: Dict) -> Dict:
             {
                 "cast_text": request["cast"]["text"],
                 "cast_summary": cast_summary,
-                "available_feeds": available_feeds
+                "available_feeds": available_feeds,
             }
         )
         return result
@@ -71,6 +73,24 @@ async def generate_embedding(request: Dict) -> Dict:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/galaxy-trending")
+async def galaxy_trending(request: Dict) -> Dict:
+    """Process trending cast galaxy from user feed"""
+    try:
+        casts = request.get("casts", [])
+        user_summary = request.get("user_summary", {})
+
+        inputs = {
+            "casts": casts,
+            "user_summary": user_summary,
+        }
+        result = await trending_galaxy_workflow.run(inputs)
+        return {"status": "success", "data": result}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+# Helper
 async def generate_cast_summary(cast_text: str) -> str:
     """Generate a summary of the cast text using the base model"""
     try:

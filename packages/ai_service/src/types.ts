@@ -27,7 +27,7 @@ export interface GenerateReplyRequest {
   similarUserFeeds: Array<{
     userData: Array<Feed>;
     summary: string;
-  }>
+  }>;
   trendingFeeds: Array<Feed>;
 }
 
@@ -43,6 +43,24 @@ export interface UserSummaryRequest {
   user_data: Record<string, unknown>;
 }
 
+export type TopicCluster = {
+  topic: string;
+  casts: {
+    hash: string;
+    text: string;
+    author: {
+      fid: number;
+      username: string;
+      displayName?: string;
+    };
+    timestamp: string;
+    likes?: number;
+    replies?: number;
+    recasts?: number;
+  }[];
+};
+
+export type GalaxyTrendingResponse = TopicCluster[];
 export interface UserSummaryResponse {
   user_summary: {
     keywords: string[];
@@ -53,4 +71,3 @@ export interface UserSummaryResponse {
     dimensions: number;
   };
 }
-

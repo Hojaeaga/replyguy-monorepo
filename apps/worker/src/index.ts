@@ -9,7 +9,6 @@ import { DBService } from "@replyguy/db";
 config();
 const PORT = process.env.PORT || 3001;
 
-
 // Initialize clients
 const queue = new QueueService({
   redis: {
@@ -17,7 +16,10 @@ const queue = new QueueService({
   },
 });
 
-const webhookUrl = process.env.NODE_ENV === "production" ? `${process.env.HOST_URL}/farcaster/webhook/receiveCast` : `http://localhost:${PORT}/farcaster/webhook/receiveCast`;
+const webhookUrl =
+  process.env.NODE_ENV === "production"
+    ? `${process.env.HOST_URL}/farcaster/webhook/receiveCast`
+    : `http://localhost:${PORT}/farcaster/webhook/receiveCast`;
 
 const neynar = new NeynarService(
   process.env.NEYNAR_API_KEY!,
@@ -34,164 +36,88 @@ const db = new DBService(
 const aiService = new AIService();
 
 // Worker job processor
+
 async function processCast(job: any) {
+  const cast = job.data;
+  const parentHash = cast.parent_hash;
+  const newParentHash = cast.hash;
+  logger.info("Processing cast", { castHash: newParentHash });
+
+  // 1. Skip replies or already-processed
+  const { data: existingReply } = await db.isCastReplyExists(newParentHash);
+  if (existingReply || parentHash) {
+    logger.info("Cast is a reply or already replied to", {
+      castHash: newParentHash,
+    });
+    return;
+  }
+
   const startTime = Date.now();
-  let castHash = 'unknown';
+  const castHash = newParentHash;
+
+  // 2. Ensure author is subscribed
+  const isSubscribed = await db.isSubscribed(cast.author.fid);
+  if (!isSubscribed) {
+    logger.info("User not subscribed, skipping", { castHash });
+    return;
+  }
 
   try {
-    // Validate job structure
-    if (!job || !job.data) {
-      throw new Error('Invalid job structure: missing job.data');
-    }
+    // 3. Generate embeddings for this cast
+    const castEmbeddings = await aiService.generateEmbeddings(cast.text);
+    if (!castEmbeddings) throw new Error("Failed to generate cast embeddings");
 
-    const cast = job.data;
-    castHash = cast?.hash || 'unknown';
+    // 4. Match cast to similar users
+    const similarUsersToCast = await db.fetchSimilarUsersToCast(
+      castEmbeddings,
+      0.6,
+      5,
+    );
 
-    // Validate cast data
-    if (!cast) {
-      throw new Error('Invalid cast data: cast is null or undefined');
-    }
+    const similarUserMap = similarUsersToCast.reduce(
+      (acc, user) => {
+        if (user.fid !== cast.author.fid) {
+          acc[user.fid] = { summary: user.summary };
+        }
+        return acc;
+      },
+      {} as Record<string, { summary: string }>,
+    );
 
-    if (!cast.hash) {
-      throw new Error('Invalid cast data: missing cast hash');
-    }
-
-    if (!cast.author || !cast.author.fid) {
-      throw new Error('Invalid cast data: missing author or author.fid');
-    }
-
-    if (!cast.text) {
-      logger.warn('Cast has no text content', { castHash });
-    }
-
-    const parentHash = cast.parent_hash;
-    const newParentHash = cast.hash;
-
-    logger.info("Processing cast", {
-      castHash: newParentHash,
-      authorFid: cast.author.fid,
-      hasParent: !!parentHash,
-      textLength: cast.text?.length || 0
-    });
-
-    // Check if cast already replied to
-    try {
-      const { data: existingReply } = await db.isCastReplyExists(newParentHash);
-      if (existingReply) {
-        logger.info("Cast already replied to", { castHash: newParentHash });
-        return;
-      }
-    } catch (error) {
-      logger.error("Error checking existing reply", { error, castHash: newParentHash });
-      throw new Error(`Database error checking existing reply: ${error}`);
-    }
-
-    // Skip if this is a reply to another cast
-    if (parentHash) {
-      logger.info("Cast is a reply, skipping", { castHash: newParentHash });
-      return;
-    }
-
-    // Check if user is subscribed
-    let isSubscribedResult;
-    try {
-      isSubscribedResult = await db.isSubscribed(cast.author.fid);
-      if (!isSubscribedResult.success) {
-        throw new Error(`Failed to check subscription: ${isSubscribedResult.error}`);
-      }
-    } catch (error) {
-      logger.error("Error checking subscription status", { error, castHash: newParentHash, fid: cast.author.fid });
-      throw new Error(`Database error checking subscription: ${error}`);
-    }
-
-    if (!isSubscribedResult.subscribed) {
-      logger.info("User is not subscribed, skipping", {
-        castHash: newParentHash,
-        fid: cast.author.fid,
-      });
-      return;
-    }
-
-    // Generate embeddings
-    let castEmbeddings;
-    try {
-      castEmbeddings = await aiService.generateEmbeddings(cast.text || '');
-      if (!castEmbeddings) {
-        logger.error("Failed to generate cast embeddings", {
-          castHash: newParentHash,
-          textLength: cast.text?.length || 0
-        });
-        return;
-      }
-    } catch (error) {
-      logger.error("Error generating embeddings", { error, castHash: newParentHash });
-      throw new Error(`AI service error generating embeddings: ${error}`);
-    }
-
-    // Find similar users
-    let similarUsers;
-    try {
-      const { data: similarUsersData, error: similarityError } = await db.fetchSimilarFIDs(castEmbeddings, 0.4, 3);
-      if (similarityError || !similarUsersData) {
-        throw new Error(`Error finding similar users: ${similarityError}`);
-      }
-      similarUsers = similarUsersData;
-    } catch (error) {
-      logger.error("Error finding similar users", { error, castHash: newParentHash });
-      throw new Error(`Database error finding similar users: ${error}`);
-    }
-
-    // Build similar user map
-    const similarUserMap: any = {};
-    for (const user of similarUsers) {
-      if (cast.author.fid === user.fid) {
-        continue;
-      }
-      similarUserMap[user.fid] = {
-        summary: user.summary,
-      };
-    }
-
-    logger.info("Found similar users", {
-      castHash: newParentHash,
-      similarUserCount: Object.keys(similarUserMap).length
-    });
-
-    // Fetch user feeds
+    // 5. Fetch user feeds
     let similarUserFeeds;
     try {
-      const userFeedPromises = Object.keys(similarUserMap).map(
-        async (similarFid) => {
-          try {
-            const userData = await neynar.fetchCastsForUser(similarFid);
-            return { userData, summary: similarUserMap[similarFid].summary };
-          } catch (error) {
-            logger.error("Error fetching user casts", { error, similarFid, castHash: newParentHash });
-            return { userData: null, summary: similarUserMap[similarFid].summary };
-          }
-        },
-      );
+      const userFeedPromises = Object.keys(similarUserMap).map(async (fid) => {
+        try {
+          const userData = await neynar.fetchCastsForUser(fid);
+          return { userData, summary: similarUserMap[fid].summary };
+        } catch (error) {
+          logger.error("Error fetching user casts", { error, fid, castHash });
+          return { userData: null, summary: similarUserMap[fid].summary };
+        }
+      });
       similarUserFeeds = await Promise.all(userFeedPromises);
     } catch (error) {
-      logger.error("Error fetching similar user feeds", { error, castHash: newParentHash });
+      logger.error("Error fetching similar user feeds", { error, castHash });
       throw new Error(`Neynar service error fetching user feeds: ${error}`);
     }
 
-    // Fetch trending feeds
+    // 6. Fetch trending feeds
     let trendingFeeds;
     try {
       trendingFeeds = await neynar.fetchTrendingFeeds();
       if (!trendingFeeds) {
-        logger.warn("Failed to fetch trending feeds, continuing without them", { castHash: newParentHash });
+        logger.warn("Failed to fetch trending feeds, continuing without them", {
+          castHash,
+        });
         trendingFeeds = [];
       }
     } catch (error) {
-      logger.error("Error fetching trending feeds", { error, castHash: newParentHash });
-      // Don't fail the entire process for trending feeds
+      logger.error("Error fetching trending feeds", { error, castHash });
       trendingFeeds = [];
     }
 
-    // Generate reply
+    // 7. Generate reply
     let receivedData;
     try {
       receivedData = await aiService.generateReplyForCast({
@@ -204,7 +130,7 @@ async function processCast(job: any) {
         throw new Error("AI service returned null/undefined response");
       }
     } catch (error) {
-      logger.error("Error generating reply", { error, castHash: newParentHash });
+      logger.error("Error generating reply", { error, castHash });
       throw new Error(`AI service error generating reply: ${error}`);
     }
 
@@ -213,8 +139,8 @@ async function processCast(job: any) {
     if (needsReply.status) {
       const replyDetails: ReplyCast = {
         text: replyText,
-        parentHash: newParentHash,
-        embeds: embeds,
+        parentHash: castHash,
+        embeds,
       };
 
       // Post reply
@@ -222,37 +148,34 @@ async function processCast(job: any) {
       try {
         replyResult = await neynar.replyToCast(replyDetails);
         if (!replyResult) {
-          logger.error("Failed to reply to cast - Neynar returned null", { castHash: newParentHash });
+          logger.error("Failed to reply to cast - Neynar returned null", {
+            castHash,
+          });
           return;
         }
       } catch (error) {
-        logger.error("Error posting reply", { error, castHash: newParentHash });
+        logger.error("Error posting reply", { error, castHash });
         throw new Error(`Neynar service error posting reply: ${error}`);
       }
 
-      // Save reply to database
-      try {
-        await db.addCastReply(newParentHash, replyResult.cast.hash);
-      } catch (error) {
-        logger.error("Error saving cast reply to database", { error, castHash: newParentHash, replyHash: replyResult.cast.hash });
-        // Don't fail here as the reply was already posted
-      }
-
+      await db.addCastReply(castHash, replyResult.cast.hash);
       const processingTime = Date.now() - startTime;
-      logger.info("Reply posted successfully", {
-        castHash: newParentHash,
+      logger.info("Reply posted", {
+        castHash,
         replyHash: replyResult.cast.hash,
         confidence: needsReply.confidence,
-        processingTimeMs: processingTime
+        processingTimeMs: processingTime,
       });
     } else {
       const processingTime = Date.now() - startTime;
       logger.info("No reply needed", {
-        castHash: newParentHash,
+        castHash,
         reason: needsReply.reason,
-        processingTimeMs: processingTime
+        processingTimeMs: processingTime,
       });
     }
+
+    await db.updateUserSimilarityFromCast(cast.author.fid, similarUsersToCast);
   } catch (error) {
     const processingTime = Date.now() - startTime;
     logger.error("Error processing cast", {
@@ -260,7 +183,7 @@ async function processCast(job: any) {
       errorStack: error instanceof Error ? error.stack : undefined,
       castHash,
       processingTimeMs: processingTime,
-      jobId: job.id
+      jobId: job.id,
     });
     throw error;
   }
@@ -294,4 +217,3 @@ startWorker().catch((error) => {
   logger.error("Failed to start worker", error);
   process.exit(1);
 });
-

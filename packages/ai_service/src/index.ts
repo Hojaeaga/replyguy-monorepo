@@ -4,8 +4,9 @@ import {
   UserSummaryResponse,
   GenerateReplyRequest,
   GenerateEmbeddingResponse,
+  GalaxyTrendingResponse,
 } from "./types";
-import { AIProcessingResponse } from "@replyguy/core";
+import { AIProcessingResponse, Cast } from "@replyguy/core";
 
 const AI_AGENT_BASE_URL = process.env.AI_AGENT_URL || "http://localhost:8000";
 
@@ -22,7 +23,7 @@ export class AIService {
           user_data: userData,
         },
       );
-      return response.data;
+      return response.data as UserSummaryResponse;
     } catch (err: unknown) {
       console.error(
         "summarizeUserContext error",
@@ -91,6 +92,49 @@ export class AIService {
     } catch (err: unknown) {
       console.error(
         "generateEmbeddings error",
+        err instanceof Error ? err.message : err,
+      );
+      return null;
+    }
+  }
+
+  async getTrendingGalaxyFromCasts(
+    casts: Cast[],
+  ): Promise<GalaxyTrendingResponse | null> {
+    try {
+      const response = await axios.post<GalaxyTrendingResponse>(
+        `${AI_AGENT_BASE_URL}/api/galaxy-trending`,
+        {
+          casts,
+        },
+      );
+
+      return response.data.data; // note: wrapping response has { status, data }
+    } catch (err: unknown) {
+      console.error(
+        "getTrendingGalaxyFromCasts error",
+        err instanceof Error ? err.message : err,
+      );
+      return null;
+    }
+  }
+
+  async galaxyTrending(
+    casts: Cast[],
+    userSummary: UserSummaryResponse,
+  ): Promise<GalaxyTrendingResponse | null> {
+    try {
+      const response = await axios.post<GalaxyTrendingResponse>(
+        `${AI_AGENT_BASE_URL}/api/galaxy-trending`,
+        {
+          casts,
+          user_summary: userSummary,
+        },
+      );
+      return response.data.data;
+    } catch (err: unknown) {
+      console.error(
+        "galaxyTrending error",
         err instanceof Error ? err.message : err,
       );
       return null;
