@@ -38,7 +38,7 @@ const aiService = new AIService();
 // Worker job processor
 
 async function processCast(job: any) {
-  const cast = job.data;
+  const cast = job.data.cast;
   const parentHash = cast.parent_hash;
   const newParentHash = cast.hash;
   logger.info("Processing cast", { castHash: newParentHash });
@@ -75,7 +75,7 @@ async function processCast(job: any) {
     );
 
     const similarUserMap = similarUsersToCast.reduce(
-      (acc, user) => {
+      (acc: Record<string, { summary: string }>, user: any) => {
         if (user.fid !== cast.author.fid) {
           acc[user.fid] = { summary: user.summary };
         }

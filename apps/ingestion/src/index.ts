@@ -67,11 +67,15 @@ app.post("/user/register", async (req, res) => {
 });
 
 app.post("/user/chat", async (req, res) => {
-try {
-    const { fid} = req.body;
+  try {
+    const { fid } = req.body;
     const response = await userService.registerReqForTrending(fid);
     res.json(response);
+  } catch (error) {
+    logger.error("Error in user chat", error);
+    res.status(500).json({ success: false, error: "Failed to process user chat" });
   }
+});
 
 // Webhook endpoint for Neynar
 app.post("/farcaster/webhook/receiveCast", async (req, res) => {

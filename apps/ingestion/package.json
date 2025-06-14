@@ -5,7 +5,7 @@
     "description": "ReplyGuy webhook ingestion service",
     "main": "dist/index.js",
     "scripts": {
-        "build": "tsc -p tsconfig.build.json",
+        "build": "tsc -p tsconfig.build.json --noEmit false",
         "dev": "tsx watch src/index.ts",
         "start": "node dist/index.js",
         "check-types": "tsc --noEmit",

@@ -9,7 +9,7 @@ export class NeynarService {
     private signerUuid: string,
     private webhookId: string,
     private webhookUrl: string,
-  ) {}
+  ) { }
 
   private getHeaders() {
     return {
@@ -179,9 +179,9 @@ export class NeynarService {
       embedUrls: cast.embeds?.map((e: any) => e.url) || [],
       frame: cast.frames?.length
         ? {
-            title: cast.frames[0].title,
-            buttons: cast.frames[0].buttons?.map((b: any) => b.title) || [],
-          }
+          title: cast.frames[0].title,
+          buttons: cast.frames[0].buttons?.map((b: any) => b.title) || [],
+        }
         : null,
       likes: cast.reactions?.likes_count || 0,
       recasts: cast.reactions?.recasts_count || 0,
@@ -252,9 +252,9 @@ export class NeynarService {
         embedUrls: cast.embeds?.map((e: any) => e.url) || [],
         frame: cast.frames?.length
           ? {
-              title: cast.frames[0].title,
-              buttons: cast.frames[0].buttons?.map((b: any) => b.title) || [],
-            }
+            title: cast.frames[0].title,
+            buttons: cast.frames[0].buttons?.map((b: any) => b.title) || [],
+          }
           : null,
         likes: cast.reactions?.likes_count || 0,
         recasts: cast.reactions?.recasts_count || 0,
@@ -281,9 +281,9 @@ export class NeynarService {
         embedUrls: cast.embeds?.map((e: any) => e.url) || [],
         frame: cast.frames?.length
           ? {
-              title: cast.frames[0].title,
-              buttons: cast.frames[0].buttons?.map((b: any) => b.title) || [],
-            }
+            title: cast.frames[0].title,
+            buttons: cast.frames[0].buttons?.map((b: any) => b.title) || [],
+          }
           : null,
         likes: cast.reactions?.likes_count || 0,
         recasts: cast.reactions?.recasts_count || 0,
@@ -327,9 +327,9 @@ export class NeynarService {
       embedUrls: cast.embeds?.map((e: any) => e.url) || [],
       frame: cast.frames?.length
         ? {
-            title: cast.frames[0].title,
-            buttons: cast.frames[0].buttons?.map((b: any) => b.title) || [],
-          }
+          title: cast.frames[0].title,
+          buttons: cast.frames[0].buttons?.map((b: any) => b.title) || [],
+        }
         : null,
       likes: cast.reactions?.likes_count || 0,
       recasts: cast.reactions?.recasts_count || 0,
@@ -371,7 +371,7 @@ export class NeynarService {
         throw new Error(`Trending fetch failed: ${res.statusText}`);
       }
 
-      const json = await res.json();
+      const json = await res.json() as any;
       return {
         success: true,
         data: json.casts, // trending posts

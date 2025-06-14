@@ -8,7 +8,7 @@ import {
 } from "./types";
 import { AIProcessingResponse, Cast } from "@replyguy/core";
 
-const AI_AGENT_BASE_URL = process.env.AI_AGENT_URL || "http://localhost:8000";
+const AI_AGENT_BASE_URL = process.env.AI_AGENT_URL || "http://localhost:8001";
 
 export class AIService {
   constructor() { }
@@ -109,7 +109,7 @@ export class AIService {
         },
       );
 
-      return response.data.data; // note: wrapping response has { status, data }
+      return response.data; // note: response.data is already GalaxyTrendingResponse
     } catch (err: unknown) {
       console.error(
         "getTrendingGalaxyFromCasts error",
@@ -131,7 +131,7 @@ export class AIService {
           user_summary: userSummary,
         },
       );
-      return response.data.data;
+      return response.data;
     } catch (err: unknown) {
       console.error(
         "galaxyTrending error",
