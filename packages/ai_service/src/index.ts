@@ -108,4 +108,26 @@ export class AIService {
       return null;
     }
   }
+
+  async galaxyTrending(
+    casts: Cast[],
+    userSummary: UserSummaryResponse,
+  ): Promise<GalaxyTrendingResponse | null> {
+    try {
+      const response = await axios.post<GalaxyTrendingResponse>(
+        `${AI_AGENT_BASE_URL}/api/galaxy-trending`,
+        {
+          casts,
+          user_summary: userSummary,
+        },
+      );
+      return response.data.data;
+    } catch (err: unknown) {
+      console.error(
+        "galaxyTrending error",
+        err instanceof Error ? err.message : err,
+      );
+      return null;
+    }
+  }
 }

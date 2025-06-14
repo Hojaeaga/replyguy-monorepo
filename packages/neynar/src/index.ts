@@ -596,4 +596,30 @@ export class NeynarService {
       casts,
     };
   }
+
+  async fetchTrendingPostsWithLimit(
+    targetLimit = 30,
+  ): Promise<{ success: boolean; data: any[]; error?: string }> {
+    let allCasts: any[] = [];
+    let cursor: string | undefined = undefined;
+
+    try {
+      while (allCasts.length < targetLimit) {
+        const response = await this.fetchTrendingPosts(10, cursor); // use your existing method
+
+        if (!response.success) {
+          return { success: false, data: [], error: response.error };
+        }
+
+        allCasts = [...allCasts, ...response.data];
+        cursor = response.cursor;
+
+        if (!cursor || response.data.length === 0) break; // No more results
+      }
+
+      return { success: true, data: allCasts.slice(0, targetLimit) };
+    } catch (err: any) {
+      return { success: false, data: [], error: err.message || String(err) };
+    }
+  }
 }

@@ -60,6 +60,13 @@ app.post("/user/register", async (req, res) => {
   }
 });
 
+app.post("/user/chat", async (req, res) => {
+try {
+    const { fid} = req.body;
+    const response = await userService.registerReqForTrending(fid);
+    res.json(response);
+  }
+
 // Webhook endpoint for Neynar
 app.post("/farcaster/webhook/receiveCast", async (req, res) => {
   try {

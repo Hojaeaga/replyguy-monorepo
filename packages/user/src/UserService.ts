@@ -111,4 +111,44 @@ export class UserService {
 
     return { success: true, data: `User ${fid} subscribed` };
   }
+
+  async registerReqForTrending(fid: string) {
+    const alreadySubscribed = await checkFIDStatus(Number(fid), this.db);
+    if (!alreadySubscribed.success) {
+      throw new Error("Failed to check FID status");
+    }
+
+    if (alreadySubscribed.status !== FID_STATUS.SUBSCRIBED) {
+      return {
+        success: false,
+        data: `User ${fid} is  not subscribed returning`,
+      };
+    }
+
+    const userSummary = await this.aiService.summarizeUserContext({
+      fid: Number(fid),
+    });
+    const trendingResult = await this.neynar.fetchTrendingPostsWithLimit(30);
+
+    if (!trendingResult.success) {
+      throw new Error(trendingResult.error || "Trending fetch failed");
+    }
+
+    const trendingCasts = trendingResult.data; // now 30 posts
+
+    if (trendingCasts.length === 0) {
+      return { success: false, data: "No trending posts found" };
+    }
+    const galaxyTrending = await this.aiService.galaxyTrending(
+      trendingCasts,
+      userSummary,
+    );
+    if (!galaxyTrending) {
+      throw new Error("Failed to get galaxy trending");
+    }
+    return {
+      success: true,
+      data: galaxyTrending,
+    };
+  }
 }
