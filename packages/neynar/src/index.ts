@@ -7,6 +7,8 @@ export class NeynarService {
   constructor(
     private neynarApiKey: string,
     private signerUuid: string,
+    private webhookId: string,
+    private webhookUrl: string,
   ) {}
 
   private getHeaders() {
@@ -14,32 +16,6 @@ export class NeynarService {
       "x-api-key": this.neynarApiKey,
       "Content-Type": "application/json",
     };
-  }
-
-  async fetchTrendingPosts(limit = 10, cursor?: string) {
-    try {
-      const url = new URL(`${this.NEYNAR_BASE_URL}/feed/trending/`);
-      url.searchParams.set("limit", limit.toString());
-      if (cursor) url.searchParams.set("cursor", cursor);
-
-      const res = await fetch(url.toString(), {
-        headers: this.getHeaders(),
-      });
-
-      if (!res.ok) {
-        throw new Error(`Trending fetch failed: ${res.statusText}`);
-      }
-
-      const json = await res.json();
-      return {
-        success: true,
-        data: json.casts, // trending posts
-        cursor: json.cursor, // for pagination
-      };
-    } catch (err: any) {
-      console.error("fetchTrendingPosts error:", err);
-      return { success: false, error: err.message || err };
-    }
   }
 
   async fetchSubscribedUsers(): Promise<string[]> {
@@ -76,9 +52,9 @@ export class NeynarService {
       const res = await axios.put(
         `${this.NEYNAR_BASE_URL}/webhook`,
         {
-          webhook_id: "01JTB3W4GW48Z58X0HQAM587AJ",
+          webhook_id: this.webhookId,
           name: "receiveCast",
-          url: `${config.host}/api/register/cast`,
+          url: this.webhookUrl,
           subscription: {
             "cast.created": {
               author_fids: numericFids,
@@ -176,27 +152,24 @@ export class NeynarService {
 
     const url = `${this.NEYNAR_BASE_URL}/feed/user/popular?fid=${fid}`;
 
-    let proof: any;
+    let receivedData: any;
     let ipfsHash: any;
 
     try {
-      proof = await this.reclaimClient.zkFetch(
-        url,
-        publicOptions,
-        privateOptions,
-      );
+      const response = await axios.get(url, {
+        method: "GET",
+        headers: {
+          "x-api-key": this.neynarApiKey,
+          "Content-Type": "application/json",
+        },
+      });
+      receivedData = response.data;
     } catch (err) {
       console.error("fetchUserPopularCasts error", err);
       return null;
     }
 
-    if (proof === undefined) {
-      return null;
-    }
-
-    const castData = JSON.parse(proof.extractedParameterValues.data);
-
-    const simplifiedCasts = castData.casts.map((cast: any) => ({
+    const simplifiedCasts = receivedData.casts.map((cast: any) => ({
       fid: cast.author.fid,
       name: cast.author.username,
       hash: cast.hash,
@@ -213,22 +186,6 @@ export class NeynarService {
       likes: cast.reactions?.likes_count || 0,
       recasts: cast.reactions?.recasts_count || 0,
     }));
-
-    try {
-      ipfsHash = await this.ipfsService.publishJSON(proof);
-    } catch (error) {
-      console.error("publishJSON error", error);
-    }
-
-    try {
-      await this.avs.sendTask(
-        ipfsHash,
-        proof.claimData.timestampS.toString(),
-        0,
-      );
-    } catch (err) {
-      console.error("sendTask error", err);
-    }
 
     return simplifiedCasts;
   }
@@ -345,78 +302,6 @@ export class NeynarService {
   async fetchCastsForUser(fid: string) {
     const url = `${this.NEYNAR_BASE_URL}/feed/user/casts?fid=${fid}&limit=100`;
 
-    // let proof: any;
-    // let ipfsHash: any;
-    // const publicOptions = {
-    //     method: "GET", // or POST
-    // };
-
-    // const privateOptions = {
-    //     headers: {
-    //         "x-api-key": this.neynarApiKey,
-    //         "Content-Type": "application/json",
-
-    //     },
-    // };
-
-    // try {
-    //     proof = await this.reclaimClient.zkFetch(
-    //         url,
-    //         publicOptions,
-    //         privateOptions,
-    //     );
-    // } catch (err) {
-    //     console.error("fetchCastsForUser error", err);
-    // }
-
-    // if (proof === undefined) {
-    //     return null;
-    // }
-
-    // const castData = JSON.parse(proof.extractedParameterValues.data);
-
-    // const simplifiedCasts = castData.casts.map((cast: any) => ({
-    //     author: cast.author.username,
-    //     fid: cast.author.fid,
-    //     hash: cast.hash,
-    //     text: cast.text,
-    //     timestamp: cast.timestamp,
-    //     channel: cast.channel?.name || null,
-    //     embedUrls: cast.embeds?.map((e: any) => e.url) || [],
-    //     frame: cast.frames?.length
-    //         ? {
-    //             title: cast.frames[0].title,
-    //             buttons: cast.frames[0].buttons?.map((b: any) => b.title) || [],
-    //         }
-    //         : null,
-    //     likes: cast.reactions?.likes_count || 0,
-    //     recasts: cast.reactions?.recasts_count || 0,
-    //     frames:
-    //         cast.frames?.map((f: any) => ({
-    //             title: f.title,
-    //             buttons: f.buttons?.map((b: any) => b.title) || [],
-    //         })) || [],
-    // }));
-
-    // try {
-    //     ipfsHash = await this.ipfsService.publishJSON(proof);
-    //     console.log("ipfsHash", ipfsHash);
-    // } catch (error) {
-    //     console.error("publishJSON error", error);
-    // }
-
-    // try {
-    //     console.log("ipfsHash", ipfsHash);
-
-    //     await this.avs.sendTask(
-    //         ipfsHash,
-    //         proof.claimData.timestampS.toString(),
-    //         0,
-    //     );
-    //     console.log("Sent to AVS Network");
-    // } catch (err) {
-    //     console.error("sendTask error", err);
-    // }
     let data;
     try {
       const res = await axios.get(url, {
@@ -458,118 +343,6 @@ export class NeynarService {
     return simplifiedCasts;
   }
 
-  async fetchUserPopularCastsData(fid: string) {
-    const publicOptions = {
-      method: "GET", // or POST
-    };
-
-    const privateOptions = {
-      headers: {
-        "x-api-key": this.neynarApiKey,
-        "Content-Type": "application/json",
-      },
-    };
-
-    const url = `${this.NEYNAR_BASE_URL}/feed/user/popular?fid=${fid}`;
-
-    let proof: any;
-
-    try {
-      proof = await this.reclaimClient.zkFetch(
-        url,
-        publicOptions,
-        privateOptions,
-      );
-    } catch (err) {
-      console.error("fetchUserPopularCasts error", err);
-      return null;
-    }
-
-    if (proof === undefined) {
-      return null;
-    }
-
-    const castData = JSON.parse(proof.extractedParameterValues.data);
-
-    const simplifiedCasts = castData.casts.map((cast: any) => ({
-      fid: cast.author.fid,
-      name: cast.author.username,
-      hash: cast.hash,
-      text: cast.text,
-      timestamp: cast.timestamp,
-      channel: cast.channel?.name || null,
-      embedUrls: cast.embeds?.map((e: any) => e.url) || [],
-      frame: cast.frames?.length
-        ? {
-            title: cast.frames[0].title,
-            buttons: cast.frames[0].buttons?.map((b: any) => b.title) || [],
-          }
-        : null,
-      likes: cast.reactions?.likes_count || 0,
-      recasts: cast.reactions?.recasts_count || 0,
-    }));
-
-    return simplifiedCasts;
-  }
-
-  async fetchCastsForUserData(fid: string) {
-    const publicOptions = {
-      method: "GET", // or POST
-    };
-
-    const privateOptions = {
-      headers: {
-        "x-api-key": this.neynarApiKey,
-        "Content-Type": "application/json",
-      },
-    };
-
-    const url = `${this.NEYNAR_BASE_URL}/feed/user/casts?fid=${fid}&limit=100`;
-
-    let proof: any;
-
-    try {
-      proof = await this.reclaimClient.zkFetch(
-        url,
-        publicOptions,
-        privateOptions,
-      );
-    } catch (err) {
-      console.error("fetchCastsForUser error", err);
-    }
-
-    if (proof === undefined) {
-      return null;
-    }
-
-    const castData = JSON.parse(proof.extractedParameterValues.data);
-
-    const simplifiedCasts = castData.casts.map((cast: any) => ({
-      author: cast.author.username,
-      fid: cast.author.fid,
-      hash: cast.hash,
-      text: cast.text,
-      timestamp: cast.timestamp,
-      channel: cast.channel?.name || null,
-      embedUrls: cast.embeds?.map((e: any) => e.url) || [],
-      frame: cast.frames?.length
-        ? {
-            title: cast.frames[0].title,
-            buttons: cast.frames[0].buttons?.map((b: any) => b.title) || [],
-          }
-        : null,
-      likes: cast.reactions?.likes_count || 0,
-      recasts: cast.reactions?.recasts_count || 0,
-      frames:
-        cast.frames?.map((f: any) => ({
-          title: f.title,
-          buttons: f.buttons?.map((b: any) => b.title) || [],
-        })) || [],
-    }));
-
-    return simplifiedCasts;
-  }
-
   async aggregateUserData(fid: string) {
     const [popularCasts, channels, casts] = await Promise.all([
       this.fetchUserPopularCasts(fid),
@@ -583,18 +356,31 @@ export class NeynarService {
       casts,
     };
   }
-  async aggregateUserDataForBackend(fid: string) {
-    const [popularCasts, channels, casts] = await Promise.all([
-      this.fetchUserPopularCastsData(fid),
-      this.fetchUserChannels(fid),
-      this.fetchCastsForUserData(fid),
-    ]);
 
-    return {
-      popularCasts,
-      channels,
-      casts,
-    };
+  async fetchTrendingPosts(limit = 10, cursor?: string) {
+    try {
+      const url = new URL(`${this.NEYNAR_BASE_URL}/feed/trending/`);
+      url.searchParams.set("limit", limit.toString());
+      if (cursor) url.searchParams.set("cursor", cursor);
+
+      const res = await fetch(url.toString(), {
+        headers: this.getHeaders(),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Trending fetch failed: ${res.statusText}`);
+      }
+
+      const json = await res.json();
+      return {
+        success: true,
+        data: json.casts, // trending posts
+        cursor: json.cursor, // for pagination
+      };
+    } catch (err: any) {
+      console.error("fetchTrendingPosts error:", err);
+      return { success: false, error: err.message || err };
+    }
   }
 
   async fetchTrendingPostsWithLimit(
