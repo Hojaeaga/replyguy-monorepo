@@ -6,6 +6,7 @@ import {
   GenerateReplyResponse,
   GenerateEmbeddingResponse,
 } from "./types";
+import { AIProcessingResponse } from "@replyguy/core";
 
 const AI_AGENT_BASE_URL = process.env.AI_AGENT_URL || "http://localhost:8000";
 
@@ -34,26 +35,31 @@ export class AIService {
 
   async generateReplyForCast({
     cast,
-    cast_summary,
     similarUserFeeds,
     trendingFeeds,
-  }: GenerateReplyRequest): Promise<GenerateReplyResponse | string> {
+  }: GenerateReplyRequest): Promise<AIProcessingResponse | string> {
     try {
-      const response = await axios.post<GenerateReplyResponse>(
-        `${AI_AGENT_BASE_URL}/api/generate-reply`,
-        {
-          cast,
-          cast_summary,
-          similarUserFeeds,
-          trendingFeeds,
+      const response = await axios.post(`${AI_AGENT_BASE_URL}/api/generate-reply`, {
+        cast,
+        similarUserFeeds,
+        trendingFeeds,
+      });
+  
+      const data = response.data;
+  
+      const result: AIProcessingResponse = {
+        needsReply: {
+          status: data.intent_analysis.should_reply,
+          confidence: data.intent_analysis.confidence,
+          reason: data.intent_analysis.identified_needs?.[0] ?? "",
         },
-      );
-      return response.data;
+        replyText: data.reply.reply_text,
+        embeds: data.reply.link
+      };
+  
+      return result;
     } catch (err: unknown) {
-      console.error(
-        "generateReplyForCast error",
-        err instanceof Error ? err.message : err,
-      );
+      console.error("generateReplyForCast error", err instanceof Error ? err.message : err);
       return "Sorry, I couldn't generate a reply at the moment.";
     }
   }

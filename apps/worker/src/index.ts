@@ -57,7 +57,44 @@ async function processCast(job: any) {
   }
 
   try {
-    const receivedData = await aiService.generateReplyForCast(cast);
+    const castEmbeddings = await aiService.generateEmbeddings(cast.text);
+    if (!castEmbeddings) {
+      logger.error("Failed to generate cast embeddings", {
+        castHash: newParentHash,
+      });
+      return;
+    }
+    const { data: similarUsers, error: similarityError } =
+      await db.fetchSimilarFIDs(castEmbeddings, 0.4, 3);
+    if (similarityError || !similarUsers) {
+      throw new Error("Error finding similar users");
+    }
+
+    const similarUserMap: any = {};
+    for (const user of similarUsers) {
+      if (cast.author.fid === user.fid) {
+        continue;
+      }
+      similarUserMap[user.fid] = {
+        summary: user.summary,
+      };
+    }
+
+    const userFeedPromises = Object.keys(similarUserMap).map(
+      async (similarFid) => {
+        const userData =
+          await neynar.fetchCastsForUserData(similarFid);
+        return { userData, summary: similarUserMap[similarFid].summary };
+      },
+    );
+    const similarUserFeeds = await Promise.all(userFeedPromises);
+    const trendingFeeds = await neynar.fetchTrendingFeeds();
+
+    const receivedData = await aiService.generateReplyForCast({
+      cast,
+      similarUserFeeds,
+      trendingFeeds,
+    });
 
     const { needsReply, replyText, embeds } = receivedData;
 

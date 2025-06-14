@@ -3,30 +3,32 @@ import { AIProcessingResponse, Cast, Embeddings } from "@replyguy/core";
 export interface UserData {}
 
 export interface Feed {
+  author: string;
+  fid: number;
+  hash: string;
   text: string;
-  user_id: string;
-  cast_id: string;
-  relevance_score: number;
-  confidence: number;
+  timestamp: string;
+  channel: string | null;
+  embedUrls: string[];
+  frame: {
+    title: string;
+    buttons: string[];
+  } | null;
+  likes: number;
+  recasts: number;
+  frames: Array<{
+    title: string;
+    buttons: string[];
+  }>;
 }
 
 export interface GenerateReplyRequest {
   cast: Cast;
-  cast_summary: string;
   similarUserFeeds: Array<{
-    text: string;
-    user_id: string;
-    cast_id: string;
-    relevance_score: number;
-    confidence: number;
-  }>;
-  trendingFeeds: Array<{
-    text: string;
-    user_id: string;
-    cast_id: string;
-    relevance_score: number;
-    confidence: number;
-  }>;
+    userData: Array<Feed>;
+    summary: string;
+  }>
+  trendingFeeds: Array<Feed>;
 }
 
 export interface GenerateReplyResponse extends AIProcessingResponse {}
