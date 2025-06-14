@@ -1,10 +1,22 @@
 {
-  "extends": "@repo/typescript-config/react-library.json",
+  "extends": "@replyguy/typescript-config/react-library.json",
   "compilerOptions": {
-    "lib": ["dom", "ES2015"],
+    "lib": [
+      "dom",
+      "ES2015"
+    ],
     "sourceMap": true,
-    "types": ["jest", "node"]
+    "types": [
+      "jest",
+      "node"
+    ]
   },
-  "include": ["."],
-  "exclude": ["dist", "build", "node_modules"]
+  "include": [
+    "."
+  ],
+  "exclude": [
+    "dist",
+    "build",
+    "node_modules"
+  ]
 }

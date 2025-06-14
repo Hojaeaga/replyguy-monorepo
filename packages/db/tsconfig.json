@@ -1,0 +1,21 @@
+{
+    "extends": "@replyguy/typescript-config/base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "./src/*"
+            ]
+        }
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}
