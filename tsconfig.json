@@ -1,8 +1,7 @@
 {
+    "extends": "./packages/config/tsconfig/base.json",
     "compilerOptions": {
         "baseUrl": ".",
-        "moduleResolution": "node",
-        "esModuleInterop": true,
         "paths": {
             "@replyguy/*": [
                 "packages/*/src"
@@ -10,39 +9,11 @@
         }
     },
     "files": [],
-    "references": [
-        {
-            "path": "./packages/core"
-        },
-        {
-            "path": "./packages/queue"
-        },
-        {
-            "path": "./packages/db"
-        },
-        {
-            "path": "./packages/reclaim"
-        },
-        {
-            "path": "./packages/farcaster-adapter"
-        },
-        {
-            "path": "./packages/openai"
-        },
-        {
-            "path": "./packages/ui"
-        },
-        {
-            "path": "./apps/ingestion"
-        },
-        {
-            "path": "./apps/worker"
-        },
-        {
-            "path": "./apps/validator"
-        },
-        {
-            "path": "./apps/web"
-        }
+    "include": [],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "build",
+        ".turbo"
     ]
 }

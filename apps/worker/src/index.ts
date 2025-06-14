@@ -7,6 +7,8 @@ import { DBService } from "@replyguy/db";
 
 // Load environment variables
 config();
+const PORT = process.env.PORT || 3001;
+
 
 // Initialize clients
 const queue = new QueueService({
@@ -15,11 +17,13 @@ const queue = new QueueService({
   },
 });
 
+const webhookUrl = process.env.NODE_ENV === "production" ? `${process.env.HOST_URL}/farcaster/webhook/receiveCast` : `http://localhost:${PORT}/farcaster/webhook/receiveCast`;
+
 const neynar = new NeynarService(
   process.env.NEYNAR_API_KEY!,
   process.env.NEYNAR_SIGNER_UUID!,
   process.env.NEYNAR_WEBHOOK_ID!,
-  process.env.NEYNAR_WEBHOOK_URL!,
+  webhookUrl,
 );
 
 const db = new DBService(
@@ -45,6 +49,8 @@ async function processCast(job: any) {
     });
     return;
   }
+  const startTime = Date.now();
+  let castHash = 'unknown';
 
   // 2. Ensure author is subscribed
   const isSubscribed = await db.isSubscribed(cast.author.fid);
@@ -97,6 +103,57 @@ async function processCast(job: any) {
       return;
     }
 
+    // Fetch user feeds
+    let similarUserFeeds;
+    try {
+      const userFeedPromises = Object.keys(similarUserMap).map(
+        async (similarFid) => {
+          try {
+            const userData = await neynar.fetchCastsForUser(similarFid);
+            return { userData, summary: similarUserMap[similarFid].summary };
+          } catch (error) {
+            logger.error("Error fetching user casts", { error, similarFid, castHash: newParentHash });
+            return { userData: null, summary: similarUserMap[similarFid].summary };
+          }
+        },
+      );
+      similarUserFeeds = await Promise.all(userFeedPromises);
+    } catch (error) {
+      logger.error("Error fetching similar user feeds", { error, castHash: newParentHash });
+      throw new Error(`Neynar service error fetching user feeds: ${error}`);
+    }
+
+    // Fetch trending feeds
+    let trendingFeeds;
+    try {
+      trendingFeeds = await neynar.fetchTrendingFeeds();
+      if (!trendingFeeds) {
+        logger.warn("Failed to fetch trending feeds, continuing without them", { castHash: newParentHash });
+        trendingFeeds = [];
+      }
+    } catch (error) {
+      logger.error("Error fetching trending feeds", { error, castHash: newParentHash });
+      // Don't fail the entire process for trending feeds
+      trendingFeeds = [];
+    }
+
+    // Generate reply
+    let receivedData;
+    try {
+      receivedData = await aiService.generateReplyForCast({
+        cast,
+        similarUserFeeds,
+        trendingFeeds,
+      });
+
+      if (!receivedData) {
+        throw new Error("AI service returned null/undefined response");
+      }
+    } catch (error) {
+      logger.error("Error generating reply", { error, castHash: newParentHash });
+      throw new Error(`AI service error generating reply: ${error}`);
+    }
+
     const { needsReply, replyText, embeds } = receivedData;
 
     if (needsReply.status) {
@@ -106,11 +163,17 @@ async function processCast(job: any) {
         embeds: embeds,
       };
 
-      const replyResult = await neynar.replyToCast(replyDetails);
-
-      if (!replyResult) {
-        logger.error("Failed to reply to cast", { castHash: newParentHash });
-        return;
+      // Post reply
+      let replyResult;
+      try {
+        replyResult = await neynar.replyToCast(replyDetails);
+        if (!replyResult) {
+          logger.error("Failed to reply to cast - Neynar returned null", { castHash: newParentHash });
+          return;
+        }
+      } catch (error) {
+        logger.error("Error posting reply", { error, castHash: newParentHash });
+        throw new Error(`Neynar service error posting reply: ${error}`);
       }
 
       await db.addCastReply(newParentHash, replyResult.cast.hash);
@@ -118,17 +181,27 @@ async function processCast(job: any) {
         castHash: newParentHash,
         replyHash: replyResult.cast.hash,
         confidence: needsReply.confidence,
+        processingTimeMs: processingTime
       });
     } else {
+      const processingTime = Date.now() - startTime;
       logger.info("No reply needed", {
         castHash: newParentHash,
         reason: needsReply.reason,
+        processingTimeMs: processingTime
       });
     }
 
     await db.updateUserSimilarityFromCast(cast.author.fid, similarUsersToCast);
   } catch (error) {
-    logger.error("Error processing cast", { error, castHash: newParentHash });
+    const processingTime = Date.now() - startTime;
+    logger.error("Error processing cast", {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+      castHash,
+      processingTimeMs: processingTime,
+      jobId: job.id
+    });
     throw error;
   }
 }

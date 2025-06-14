@@ -1,0 +1,25 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "display": "Node.js",
+    "extends": "./base.json",
+    "compilerOptions": {
+        "module": "CommonJS",
+        "target": "ES2022",
+        "moduleResolution": "Node",
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "outDir": "dist",
+        "rootDir": "src",
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "dist",
+        "build",
+        "node_modules"
+    ]
+}

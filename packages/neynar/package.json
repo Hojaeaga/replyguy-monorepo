@@ -2,19 +2,29 @@
     "name": "@replyguy/neynar",
     "version": "0.0.0",
     "private": true,
-    "description": "Neynar API client for ReplyGuy",
+    "description": "Neynar API client and Farcaster adapter for ReplyGuy",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "require": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "files": [
+        "dist"
+    ],
     "scripts": {
-        "build": "tsup",
-        "dev": "tsup --watch",
+        "build": "tsc -p tsconfig.build.json",
+        "dev": "tsc -p tsconfig.build.json --watch",
         "check-types": "tsc --noEmit",
         "lint": "eslint src/",
         "test": "jest"
     },
     "dependencies": {
         "@replyguy/core": "workspace:*",
-        "axios": "^1.9.0"
+        "axios": "^1.6.7"
     },
     "devDependencies": {
         "@replyguy/eslint-config": "workspace:*",
