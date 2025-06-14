@@ -9,7 +9,7 @@
         "dist"
     ],
     "scripts": {
-        "build": "tsup && tsc --emitDeclarationOnly",
+        "build": "tsup && tsc --emitDeclarationOnly --outDir dist",
         "dev": "tsup --watch",
         "check-types": "tsc --noEmit",
         "lint": "eslint src/",
