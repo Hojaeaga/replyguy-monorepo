@@ -23,7 +23,7 @@ export class AIService {
           user_data: userData,
         },
       );
-      return response.data;
+      return response.data as UserSummaryResponse;
     } catch (err: unknown) {
       console.error(
         "summarizeUserContext error",

@@ -128,6 +128,9 @@ export class UserService {
     const userSummary = await this.aiService.summarizeUserContext({
       fid: Number(fid),
     });
+    if (!userSummary) {
+      throw new Error("Failed to summarize user context");
+    }
     const trendingResult = await this.neynar.fetchTrendingPostsWithLimit(30);
 
     if (!trendingResult.success) {
