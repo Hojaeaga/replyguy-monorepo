@@ -18,6 +18,8 @@ const queue = new QueueService({
 const neynar = new NeynarService(
   process.env.NEYNAR_API_KEY!,
   process.env.NEYNAR_SIGNER_UUID!,
+  process.env.NEYNAR_WEBHOOK_ID!,
+  process.env.NEYNAR_WEBHOOK_URL!,
 );
 
 const db = new DBService(
@@ -83,7 +85,7 @@ async function processCast(job: any) {
     const userFeedPromises = Object.keys(similarUserMap).map(
       async (similarFid) => {
         const userData =
-          await neynar.fetchCastsForUserData(similarFid);
+          await neynar.fetchCastsForUser(similarFid);
         return { userData, summary: similarUserMap[similarFid].summary };
       },
     );

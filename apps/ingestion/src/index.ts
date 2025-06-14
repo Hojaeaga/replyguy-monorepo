@@ -34,6 +34,8 @@ const db = new DBService(
 const neynar = new NeynarService(
   process.env.NEYNAR_API_KEY!,
   process.env.NEYNAR_SIGNER_UUID!,
+  process.env.NEYNAR_WEBHOOK_ID!,
+  process.env.NEYNAR_WEBHOOK_URL!,
 );
 
 const aiService = new AIService();

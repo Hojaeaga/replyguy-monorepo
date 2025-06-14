@@ -10,7 +10,7 @@ import { AIProcessingResponse } from "@replyguy/core";
 const AI_AGENT_BASE_URL = process.env.AI_AGENT_URL || "http://localhost:8000";
 
 export class AIService {
-  constructor() {}
+  constructor() { }
 
   async summarizeUserContext(
     userData: UserSummaryRequest["user_data"],
@@ -36,7 +36,7 @@ export class AIService {
     cast,
     similarUserFeeds,
     trendingFeeds,
-  }: GenerateReplyRequest): Promise<AIProcessingResponse | string> {
+  }: GenerateReplyRequest): Promise<AIProcessingResponse> {
     try {
       const response = await axios.post(
         `${AI_AGENT_BASE_URL}/api/generate-reply`,
@@ -65,7 +65,17 @@ export class AIService {
         "generateReplyForCast error",
         err instanceof Error ? err.message : err,
       );
-      return "Sorry, I couldn't generate a reply at the moment.";
+      return {
+        needsReply: {
+          status: false,
+          confidence: 0,
+          reason: "Sorry, I couldn't generate a reply at the moment.",
+        },
+        replyText: "",
+        embeds: {
+          url: "",
+        },
+      };
     }
   }
 

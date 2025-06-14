@@ -2,15 +2,15 @@ import {
   SendNotificationRequest,
   sendNotificationResponseSchema,
 } from "@farcaster/frame-sdk";
-import { getUserNotificationDetails } from "~/lib/kv";
+import { getUserNotificationDetails } from "./kv";
 
 const appUrl = process.env.NEXT_PUBLIC_URL || "";
 
 type SendFrameNotificationResult =
   | {
-      state: "error";
-      error: unknown;
-    }
+    state: "error";
+    error: unknown;
+  }
   | { state: "no_token" }
   | { state: "rate_limit" }
   | { state: "success" };

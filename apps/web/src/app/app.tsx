@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 
 const queryClient = new QueryClient();
 
-const Landing = dynamic(() => import("~/components/Landing"), {
+const Landing = dynamic(() => import("../components/Landing"), {
   ssr: false,
 });
 
