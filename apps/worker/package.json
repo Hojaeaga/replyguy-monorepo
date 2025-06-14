@@ -6,7 +6,7 @@
     "main": "dist/index.js",
     "scripts": {
         "build": "tsup",
-        "dev": "tsup --watch",
+        "dev": "tsup --watch --onSuccess \"node dist/index.js\"",
         "start": "node dist/index.js",
         "check-types": "tsc --noEmit",
         "lint": "eslint src/",
@@ -16,7 +16,7 @@
         "@replyguy/core": "workspace:*",
         "@replyguy/queue": "workspace:*",
         "@replyguy/db": "workspace:*",
-        "@replyguy/ai_service": "workspace:*",    
+        "@replyguy/ai_service": "workspace:*",
         "@replyguy/neynar": "workspace:*",
         "dotenv": "^16.3.1"
     },

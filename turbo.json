@@ -52,6 +52,44 @@
       ],
       "cache": false,
       "persistent": true
+    },
+    "dev:packages": {
+      "dependsOn": [],
+      "cache": false,
+      "persistent": true
+    },
+    "dev:apps": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false,
+      "persistent": true
+    },
+    "@replyguy/worker#dev": {
+      "dependsOn": [
+        "@replyguy/neynar#build",
+        "@replyguy/core#build",
+        "@replyguy/db#build",
+        "@replyguy/queue#build",
+        "@replyguy/ai_service#build"
+      ],
+      "cache": false,
+      "persistent": true
+    },
+    "@replyguy/ingestion#dev": {
+      "dependsOn": [
+        "@replyguy/neynar#build",
+        "@replyguy/core#build",
+        "@replyguy/db#build",
+        "@replyguy/queue#build"
+      ],
+      "cache": false,
+      "persistent": true
+    },
+    "@replyguy/ai-agent#dev": {
+      "dependsOn": [],
+      "cache": false,
+      "persistent": true
     }
   }
 }

@@ -9,7 +9,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "check-types": "turbo run check-types",
-    "run-python":"cd apps/ai_agent && poetry run uvicorn main:app --reload"
+    "run-python": "cd apps/ai_agent && poetry run uvicorn main:app --reload"
   },
   "devDependencies": {
     "prettier": "^3.5.3",
