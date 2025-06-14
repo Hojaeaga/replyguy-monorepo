@@ -6,12 +6,14 @@ import {
   GenerateEmbeddingResponse,
   GalaxyTrendingResponse,
 } from "./types";
-import { AIProcessingResponse, Cast } from "@replyguy/core";
+import { AIProcessingResponse, Cast, createLogger } from "@replyguy/core";
 
 const AI_AGENT_BASE_URL = process.env.AI_AGENT_URL || "http://localhost:8001";
 
+const logger = createLogger("ai_service");
+
 export class AIService {
-  constructor() {}
+  constructor() { }
 
   async summarizeUserContext(
     userData: UserSummaryRequest["user_data"],
@@ -57,7 +59,7 @@ export class AIService {
           reason: data.intent_analysis.identified_needs?.[0] ?? "",
         },
         replyText: data.reply.reply_text,
-        embeds: data.reply.link,
+        embeds: [{ url: data.reply.link }],
       };
 
       return result;
@@ -73,9 +75,9 @@ export class AIService {
           reason: "Sorry, I couldn't generate a reply at the moment.",
         },
         replyText: "",
-        embeds: {
+        embeds: [{
           url: "",
-        },
+        }],
       };
     }
   }

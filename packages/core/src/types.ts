@@ -157,7 +157,7 @@ export type Embeds = {
 export type ReplyCast = {
     text: string;
     parentHash: string;
-    embeds: Embeds;
+    embeds: [Embeds];
 }
 
 export type AIProcessingResponse = {
@@ -167,7 +167,7 @@ export type AIProcessingResponse = {
         reason: string | null | undefined;
     };
     replyText: string;
-    embeds: Embeds;
+    embeds: [Embeds];
 }
 
 export type Embeddings = {
