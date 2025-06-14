@@ -4,8 +4,9 @@ import {
   UserSummaryResponse,
   GenerateReplyRequest,
   GenerateEmbeddingResponse,
+  GalaxyTrendingResponse,
 } from "./types";
-import { AIProcessingResponse } from "@replyguy/core";
+import { AIProcessingResponse, Cast } from "@replyguy/core";
 
 const AI_AGENT_BASE_URL = process.env.AI_AGENT_URL || "http://localhost:8000";
 
@@ -81,6 +82,27 @@ export class AIService {
     } catch (err: unknown) {
       console.error(
         "generateEmbeddings error",
+        err instanceof Error ? err.message : err,
+      );
+      return null;
+    }
+  }
+
+  async getTrendingGalaxyFromCasts(
+    casts: Cast[],
+  ): Promise<GalaxyTrendingResponse | null> {
+    try {
+      const response = await axios.post<GalaxyTrendingResponse>(
+        `${AI_AGENT_BASE_URL}/api/galaxy-trending`,
+        {
+          casts,
+        },
+      );
+
+      return response.data.data; // note: wrapping response has { status, data }
+    } catch (err: unknown) {
+      console.error(
+        "getTrendingGalaxyFromCasts error",
         err instanceof Error ? err.message : err,
       );
       return null;
