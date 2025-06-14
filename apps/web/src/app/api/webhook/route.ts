@@ -7,8 +7,8 @@ import { NextRequest } from "next/server";
 import {
   deleteUserNotificationDetails,
   setUserNotificationDetails,
-} from "~/lib/kv";
-import { sendFrameNotification } from "~/lib/notifs";
+} from "../../../lib/kv";
+import { sendFrameNotification } from "../../../lib/notifs";
 
 export async function POST(request: NextRequest) {
   // If Neynar is enabled, we don't need to handle webhooks here

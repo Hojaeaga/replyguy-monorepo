@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
-import { getSession } from "~/auth";
-import "~/app/globals.css";
-import { Providers } from "~/app/providers";
+import { getSession } from "../auth";
+import "../app/globals.css";
+import { Providers } from "../app/providers";
 
 import { Bricolage_Grotesque } from "next/font/google";
 

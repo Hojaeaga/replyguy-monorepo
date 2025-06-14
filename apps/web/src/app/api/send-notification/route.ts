@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { setUserNotificationDetails } from "~/lib/kv";
-import { sendFrameNotification } from "~/lib/notifs";
-import { sendNeynarFrameNotification } from "~/lib/neynar";
+import { setUserNotificationDetails } from "../../../lib/kv";
+import { sendFrameNotification } from "../../../lib/notifs";
+import { sendNeynarFrameNotification } from "../../../lib/neynar";
 
 // Create our own schema instead of importing from Farcaster to avoid type conflicts
 const notificationDetailsSchema = z.object({
@@ -34,7 +34,10 @@ export async function POST(request: NextRequest) {
   if (!neynarEnabled) {
     await setUserNotificationDetails(
       Number(requestBody.data.fid),
-      requestBody.data.notificationDetails
+      {
+        url: requestBody.data.notificationDetails.url,
+        token: requestBody.data.notificationDetails.token,
+      }
     );
   }
 

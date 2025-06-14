@@ -1,0 +1,12 @@
+# Build output
+dist/
+.turbo/
+
+# Generated JS files in src directory (should not be committed)
+src/**/*.js
+src/**/*.js.map
+src/**/*.mjs
+src/**/*.mjs.map
+
+# Node modules
+node_modules/ 

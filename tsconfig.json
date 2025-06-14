@@ -1,6 +1,8 @@
 {
     "compilerOptions": {
         "baseUrl": ".",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
         "paths": {
             "@replyguy/*": [
                 "packages/*/src"

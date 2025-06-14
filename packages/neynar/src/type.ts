@@ -124,21 +124,13 @@ const BaseEmbeddedCastSchema = z.object({
     channel: DehydratedChannelSchema.optional().nullable(),
 });
 
-type EmbeddedCast = z.infer<typeof BaseEmbeddedCastSchema> & {
-    embeds: Embed[];
-};
-
-export const EmbeddedCastSchema: z.ZodType<EmbeddedCast> = BaseEmbeddedCastSchema.extend({
+export const EmbeddedCastSchema = BaseEmbeddedCastSchema.extend({
     embeds: z.lazy(() => z.array(EmbedSchema)),
 });
 
-type Embed = {
-    cast_id?: z.infer<typeof EmbedCastIdSchema>;
-    cast?: EmbeddedCast | DehydratedCast;
-    url?: string;
-};
+export type EmbeddedCast = z.infer<typeof EmbeddedCastSchema>;
 
-export const EmbedSchema: z.ZodType<Embed> = z.lazy(() =>
+export const EmbedSchema = z.lazy(() =>
     z.union([
         z.object({
             cast_id: EmbedCastIdSchema,
@@ -147,6 +139,8 @@ export const EmbedSchema: z.ZodType<Embed> = z.lazy(() =>
         z.object({ url: z.string() }),
     ]),
 );
+
+export type Embed = z.infer<typeof EmbedSchema>;
 
 const FrameButtonSchema = z.object({
     title: z.string(),

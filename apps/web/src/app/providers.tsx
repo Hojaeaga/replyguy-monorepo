@@ -3,10 +3,10 @@
 import dynamic from "next/dynamic";
 import type { Session } from "next-auth"
 import { SessionProvider } from "next-auth/react"
-import { FrameProvider } from "~/components/providers/FrameProvider";
+import { FrameProvider } from "../components/providers/FrameProvider";
 
 const WagmiProvider = dynamic(
-  () => import("~/components/providers/WagmiProvider"),
+  () => import("../components/providers/WagmiProvider"),
   {
     ssr: false,
   }

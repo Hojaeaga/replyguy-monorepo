@@ -6,7 +6,7 @@
     "main": "dist/index.js",
     "scripts": {
         "build": "tsup",
-        "dev": "tsup --watch",
+        "dev": "tsup --watch --onSuccess \"node dist/index.js\"",
         "start": "node dist/index.js",
         "check-types": "tsc --noEmit",
         "lint": "eslint src/",
@@ -15,6 +15,10 @@
     "dependencies": {
         "@replyguy/core": "workspace:*",
         "@replyguy/queue": "workspace:*",
+        "@replyguy/db": "workspace:*",
+        "@replyguy/neynar": "workspace:*",
+        "@replyguy/user": "workspace:*",
+        "@replyguy/ai_service": "workspace:*",
         "express": "^4.18.2",
         "helmet": "^7.1.0",
         "cors": "^2.8.5",

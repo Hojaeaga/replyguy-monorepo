@@ -18,11 +18,13 @@ const queue = new QueueService({
 const neynar = new NeynarService(
   process.env.NEYNAR_API_KEY!,
   process.env.NEYNAR_SIGNER_UUID!,
+  process.env.NEYNAR_WEBHOOK_ID!,
+  process.env.NEYNAR_WEBHOOK_URL!,
 );
 
 const db = new DBService(
   process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  process.env.SUPABASE_ANON_KEY!,
 );
 
 const aiService = new AIService();

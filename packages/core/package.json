@@ -9,20 +9,22 @@
         "dist"
     ],
     "scripts": {
-        "build": "tsc",
-        "dev": "tsc -w",
+        "build": "tsup && tsc --emitDeclarationOnly --outDir dist",
+        "dev": "tsup --watch",
         "check-types": "tsc --noEmit",
         "lint": "eslint src/",
         "clean": "rm -rf dist"
     },
     "dependencies": {
         "pino": "^8.16.0",
+        "pino-pretty": "^10.2.0",
         "zod": "^3.22.4"
     },
     "devDependencies": {
         "@replyguy/eslint-config": "workspace:*",
         "@replyguy/typescript-config": "workspace:*",
         "eslint": "^9.28.0",
+        "tsup": "^8.0.1",
         "typescript": "^5.2.2"
     }
 }

@@ -2,7 +2,7 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import { config } from "dotenv";
-import { logger } from "@replyguy/core";
+import { createLogger } from "@replyguy/core";
 import QueueService from "@replyguy/queue";
 import { DBService } from "@replyguy/db";
 import { NeynarService } from "@replyguy/neynar";
@@ -10,6 +10,8 @@ import { UserService } from "@replyguy/user";
 import { AIService } from "@replyguy/ai_service";
 // Load environment variables
 config();
+
+const logger = createLogger("ingestion");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -31,9 +33,13 @@ const db = new DBService(
   process.env.SUPABASE_ANON_KEY!,
 );
 
+const webhookUrl = process.env.NODE_ENV === "production" ? `${process.env.HOST_URL}/farcaster/webhook/receiveCast` : `http://localhost:${PORT}/farcaster/webhook/receiveCast`;
+
 const neynar = new NeynarService(
   process.env.NEYNAR_API_KEY!,
   process.env.NEYNAR_SIGNER_UUID!,
+  process.env.NEYNAR_WEBHOOK_ID!,
+  webhookUrl,
 );
 
 const aiService = new AIService();

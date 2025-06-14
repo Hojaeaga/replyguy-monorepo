@@ -1,5 +1,5 @@
 {
-  "extends": "@replyguy/typescript-config/react-library.json",
+  "extends": "@replyguy/typescript-config/base.json",
   "compilerOptions": {
     "lib": [
       "dom",
@@ -9,10 +9,11 @@
     "types": [
       "jest",
       "node"
-    ]
+    ],
+    "jsx": "react-jsx"
   },
   "include": [
-    "."
+    "src"
   ],
   "exclude": [
     "dist",
