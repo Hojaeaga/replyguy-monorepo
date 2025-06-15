@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { getSession } from "../auth";
+// import { getSession } from "../auth";
 import "../app/globals.css";
 import { Providers } from "../app/providers";
 
@@ -17,6 +17,7 @@ export const metadata: Metadata = {
   description:
     process.env.NEXT_PUBLIC_FRAME_DESCRIPTION ||
     "A Farcaster Frames v2 demo app",
+  metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
 };
 
 export default async function RootLayout({
@@ -24,12 +25,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getSession();
+  // Remove server-side session call to fix dynamic server usage error
+  // const session = await getSession();
 
   return (
     <html lang="en" className={bricolage.className}>
       <body>
-        <Providers session={session}>{children}</Providers>
+        <Providers session={null}>{children}</Providers>
       </body>
     </html>
   );

@@ -4,46 +4,129 @@
   "globalDependencies": [
     "turbo.json",
     "package.json",
-    "tsconfig.json"
+    "tsconfig.json",
+    ".env*"
   ],
   "concurrency": "15",
   "tasks": {
     "build": {
       "inputs": [
         "$TURBO_DEFAULT$",
-        ".env*"
+        ".env*",
+        "tsconfig*.json",
+        "next.config.js",
+        "tailwind.config.ts"
       ],
       "dependsOn": [
         "^build"
       ],
       "outputs": [
         "build/**",
-        ".vercel/**",
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**",
+        ".vercel/**"
+      ],
+      "outputLogs": "hash-only"
+    },
+    "build:production": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env.production*"
+      ],
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "build/**",
         "dist/**",
         ".next/**",
         "!.next/cache/**"
+      ],
+      "env": [
+        "NODE_ENV",
+        "REDIS_URL"
       ]
     },
-    "docker": {
+    "docker:build": {
       "dependsOn": [
-        "build"
-      ]
+        "build:production"
+      ],
+      "inputs": [
+        "Dockerfile*",
+        "package.json",
+        "dist/**"
+      ],
+      "cache": false
+    },
+    "docker:push": {
+      "dependsOn": [
+        "docker:build"
+      ],
+      "cache": false
+    },
+    "aws:deploy": {
+      "dependsOn": [
+        "docker:push",
+        "build:production"
+      ],
+      "cache": false
     },
     "test": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "jest.config.js"
+      ],
+      "outputs": [
+        "coverage/**",
+        "test-results/**"
+      ],
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "test:unit": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "jest.config.js"
+      ],
       "outputs": [
         "coverage/**"
       ],
-      "dependsOn": []
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "test:integration": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env.test*"
+      ],
+      "dependsOn": [
+        "build"
+      ],
+      "cache": false
     },
     "lint": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".eslintrc*",
+        "eslint.config.*"
+      ],
       "dependsOn": [
         "^build"
-      ]
+      ],
+      "outputLogs": "errors-only"
     },
     "check-types": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "tsconfig*.json"
+      ],
       "dependsOn": [
         "^build"
-      ]
+      ],
+      "outputLogs": "errors-only"
     },
     "dev": {
       "dependsOn": [
@@ -67,6 +150,21 @@
       "cache": false,
       "persistent": true
     },
+    "@replyguy/worker#build:production": {
+      "dependsOn": [
+        "@replyguy/neynar#build",
+        "@replyguy/core#build",
+        "@replyguy/db#build",
+        "@replyguy/queue#build",
+        "@replyguy/ai_service#build",
+        "@replyguy/user#build"
+      ],
+      "env": [
+        "NODE_ENV",
+        "REDIS_URL",
+        "OPENAI_API_KEY"
+      ]
+    },
     "@replyguy/ingestion#dev": {
       "dependsOn": [
         "@replyguy/neynar#build",
@@ -77,6 +175,44 @@
       ],
       "cache": false,
       "persistent": true
+    },
+    "@replyguy/ingestion#build:production": {
+      "dependsOn": [
+        "@replyguy/neynar#build",
+        "@replyguy/core#build",
+        "@replyguy/db#build",
+        "@replyguy/queue#build",
+        "@replyguy/user#build"
+      ],
+      "env": [
+        "NODE_ENV",
+        "REDIS_URL",
+        "NEYNAR_WEBHOOK_ID"
+      ]
+    },
+    "@replyguy/web#dev": {
+      "dependsOn": [
+        "@replyguy/core#build",
+        "@replyguy/db#build",
+        "@replyguy/ui#build"
+      ],
+      "cache": false,
+      "persistent": true
+    },
+    "@replyguy/web#build:production": {
+      "dependsOn": [
+        "@replyguy/core#build",
+        "@replyguy/db#build",
+        "@replyguy/ui#build"
+      ],
+      "env": [
+        "NODE_ENV",
+        "NEXTAUTH_SECRET",
+        "NEXTAUTH_URL"
+      ]
     }
+  },
+  "remoteCache": {
+    "signature": true
   }
 }

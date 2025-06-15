@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import App from "./app";
 
-const appUrl =  `https://replyguy.megabyte0x.xyz`;
+const appUrl = `https://replyguy.megabyte0x.xyz`;
 
 // frame preview metadata
 const appName = "ReplyGuy";
