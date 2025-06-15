@@ -1,11 +1,35 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useFrame } from "../../components/providers/FrameProvider";
 import { useEffect } from "react";
-import { useAccount } from "wagmi";
+import { useRouter } from "next/navigation";
 
-async function fetchTrendingData(fid: string) {
-  const response = await fetch("/api/trending", {
+type UserSubscriptionResponse = {
+  result: {
+    subscribed: boolean;
+  };
+};
+
+const fetchUserSubscription = async (fid: number): Promise<UserSubscriptionResponse> => {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/register/user?fid=${fid}`,
+    {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    },
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch subscription status");
+  }
+
+  return response.json();
+};
+
+async function fetchTrendingData(fid: number) {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/trending`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -19,12 +43,51 @@ async function fetchTrendingData(fid: string) {
 }
 
 export default function TrendingPage() {
-  const { address } = useAccount();
-  const { data: trendingData, isLoading, error } = useQuery({
-    queryKey: ["trending", address],
-    queryFn: () => fetchTrendingData(address || ""),
-    enabled: !!address,
+  const { context } = useFrame();
+  const router = useRouter();
+
+  const { data: subscriptionData } = useQuery({
+    queryKey: ["userSubscription", context?.user?.fid],
+    queryFn: async () => {
+      if (!context?.user?.fid) {
+        return Promise.resolve({ result: { subscribed: false } });
+      }
+      return await fetchUserSubscription(context.user.fid);
+    },
+    enabled: !!context?.user?.fid,
   });
+
+  // Redirect to home if not subscribed
+  useEffect(() => {
+    if (subscriptionData && !subscriptionData.result.subscribed) {
+      router.push('/');
+    }
+  }, [subscriptionData, router]);
+
+  const {
+    data: trendingData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["trending", context?.user?.fid],
+    queryFn: () => fetchTrendingData(context?.user?.fid as number),
+    enabled: !!context?.user?.fid,
+  });
+
+  // Redirect to main app if not in mini app context
+  useEffect(() => {
+    if (!context || !context.user?.displayName) {
+      window.location.href = "https://farcaster.xyz/miniapps/1six6FpX-nRm/replyguy";
+    }
+  }, [context]);
+
+  if (!context?.user?.fid) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-xl">Please open this in Farcaster</div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -37,7 +100,9 @@ export default function TrendingPage() {
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-xl text-red-500">Error loading trending content</div>
+        <div className="text-xl text-red-500">
+          Error loading trending content
+        </div>
       </div>
     );
   }
@@ -68,4 +133,5 @@ export default function TrendingPage() {
       </div>
     </div>
   );
-} 
+}
+
