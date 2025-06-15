@@ -13,7 +13,7 @@ const AI_AGENT_BASE_URL = process.env.AI_AGENT_URL || "http://localhost:8001";
 const logger = createLogger("ai_service");
 
 export class AIService {
-  constructor() { }
+  constructor() {}
 
   async summarizeUserContext(
     userData: UserSummaryRequest["user_data"],
@@ -75,9 +75,11 @@ export class AIService {
           reason: "Sorry, I couldn't generate a reply at the moment.",
         },
         replyText: "",
-        embeds: [{
-          url: "",
-        }],
+        embeds: [
+          {
+            url: "",
+          },
+        ],
       };
     }
   }
@@ -131,7 +133,8 @@ export class AIService {
         `${AI_AGENT_BASE_URL}/api/galaxy-trending`,
         {
           casts,
-          user_summary: userSummary,
+          user_summary: userSummary.user_summary,
+          user_embedding: userSummary.user_embeddings.vector,
         },
       );
       return response.data;

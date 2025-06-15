@@ -79,10 +79,15 @@ async def galaxy_trending(request: Dict) -> Dict:
     """Process trending cast galaxy from user feed"""
     try:
         casts = request.get("casts", [])
+        user_embedding = request.get("user_embedding")
         user_summary = request.get("user_summary", {})
+
+        if not user_embedding:
+            raise HTTPException(status_code=400, detail="Missing user_embedding field")
 
         inputs = {
             "casts": casts,
+            "user_embedding": user_embedding,
             "user_summary": user_summary,
         }
         result = await trending_galaxy_workflow.run(inputs)

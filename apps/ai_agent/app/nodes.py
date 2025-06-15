@@ -22,40 +22,6 @@ from .prompts import (
 )
 
 
-async def generate_trending_clusters(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Clusters trending casts by topics using LLM + similarity"""
-    casts = state["casts"]
-
-    # Step 1: Extract topics per cast using your LLM helper
-    state = await extract_topics_llm(state)  # sets state["topics"]
-    topics_per_cast = state["topics"]
-
-    # Step 2: Group casts into topic clusters
-    clusters = {}
-    for cast, topics in zip(casts, topics_per_cast):
-        for topic in topics:
-            topic_key = topic.lower().strip()
-            if topic_key not in clusters:
-                clusters[topic_key] = []
-            clusters[topic_key].append(cast)
-
-    # Optional: generate an embedding per cluster for vector matching
-    trending_clusters = []
-    for topic, grouped_casts in clusters.items():
-        combined_texts = " ".join(c["text"] for c in grouped_casts)
-        embedding = await get_embeddings(combined_texts)
-        trending_clusters.append(
-            {
-                "topic": topic,
-                "casts": grouped_casts,
-                "embedding": embedding,
-            }
-        )
-
-    state["trending_clusters"] = trending_clusters
-    return state
-
-
 async def generate_cast_embeddings(state: Dict[str, Any]) -> Dict[str, Any]:
     """Generate an embedding for each cast individually"""
     casts = state["casts"]  # expects: List[Cast]
@@ -370,7 +336,16 @@ async def match_trending_to_user(state: Dict[str, Any]) -> Dict[str, Any]:
     Input: state with `user_embedding`, `trending_clusters`
     Output: { matched_clusters: [{ topic, score, top_casts }] }
     """
-    user_vec = state["user_embedding"]
+    user_embedding = state["user_embedding"]
+    
+    # Handle both raw vector and structured embedding inputs
+    if isinstance(user_embedding, list):
+        user_vec = user_embedding
+    elif isinstance(user_embedding, dict) and "vector" in user_embedding:
+        user_vec = user_embedding["vector"]
+    else:
+        raise ValueError("user_embedding must be either a list of numbers or a dict with 'vector' key")
+    
     clusters = state["trending_clusters"]
 
     scored_clusters = []
@@ -411,8 +386,8 @@ async def suggest_viral_hooks(state: Dict[str, Any]) -> Dict[str, Any]:
                     "role": "system",
                     "content": (
                         "You're an expert in writing viral Farcaster replies. "
-                        "Suggest a single quote-cast or reply idea that can get high engagement",
-                        "while being authentic and insightful.",
+                        "Suggest a single quote-cast or reply idea that can get high engagement "
+                        "while being authentic and insightful."
                     ),
                 },
                 {
@@ -456,4 +431,39 @@ Reply in this JSON format:
         )
 
     state["viral_suggestions"] = suggestions
+    return state
+
+
+async def generate_trending_clusters(state: Dict[str, Any]) -> Dict[str, Any]:
+    """Clusters trending casts by topics using LLM + similarity"""
+    casts = state["casts"]
+
+    # Step 1: Extract topics per cast using your LLM helper
+    new_state = await extract_topics_llm(state)  # sets state["topics"]
+    state.update(new_state)
+
+    topics_per_cast = state["topics"]
+
+    # Step 2: Group casts into topic clusters
+    clusters = {}
+    for cast, topics in zip(casts, topics_per_cast):
+        for topic in topics:
+            topic_key = topic.lower().strip()
+            if topic_key not in clusters:
+                clusters[topic_key] = []
+            clusters[topic_key].append(cast)
+
+    trending_clusters = []
+    for topic, grouped_casts in clusters.items():
+        combined_texts = " ".join(c["text"] for c in grouped_casts)
+        embedding = await get_embeddings(combined_texts)
+        trending_clusters.append(
+            {
+                "topic": topic,
+                "casts": grouped_casts,
+                "embedding": embedding,
+            }
+        )
+
+    state["trending_clusters"] = trending_clusters
     return state
