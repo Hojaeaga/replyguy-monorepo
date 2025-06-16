@@ -223,7 +223,13 @@ export class DBService {
     try {
       const { data, error } = await this.supabase
         .from("new_users")
-        .insert({ fid, raw_summary: summary });
+        .insert({ 
+          fid, 
+          raw_summary: summary,
+          username: null,
+          tone: null,
+          channels: []
+        });
       if (error) throw error;
       return { success: true, data };
     } catch (err: any) {
@@ -233,7 +239,11 @@ export class DBService {
   }
 
   async insertUserKeywords(fid: string, keywords: string[]) {
-    const keywordRows = keywords.map((k) => ({ fid, keyword: k }));
+    const keywordRows = keywords.map((k) => ({ 
+      fid, 
+      topic: k,
+      weight: 1.0
+    }));
     try {
       const { data, error } = await this.supabase
         .from("new_user_keywords")
@@ -250,7 +260,12 @@ export class DBService {
     try {
       const { data, error } = await this.supabase
         .from("new_user_embeddings")
-        .insert({ fid, embedding });
+        .insert({ 
+          fid, 
+          embedding,
+          dimensions: embedding.length,
+          source_text: null
+        });
       if (error) throw error;
       return { success: true, data };
     } catch (err: any) {
@@ -280,13 +295,13 @@ export class DBService {
         .filter((m: any) => m.fid !== fid)
         .flatMap((m: any) => [
           {
-            fid_1: fid,
-            fid_2: m.fid,
+            fid_a: fid,
+            fid_b: m.fid,
             similarity: m.similarity,
           },
           {
-            fid_1: m.fid,
-            fid_2: fid,
+            fid_a: m.fid,
+            fid_b: fid,
             similarity: m.similarity,
           },
         ]);
@@ -308,7 +323,7 @@ export class DBService {
 
   async checkIfUserProfileExists(fid: string) {
     const { data } = await this.supabase
-      .from("new_user_profiles")
+      .from("new_users")
       .select("fid")
       .eq("fid", fid)
       .maybeSingle();
@@ -335,10 +350,10 @@ export class DBService {
 
   async getSimilarUsers(fid: number, limit = 10) {
     const { data, error } = await this.supabase
-      .from("new_user_edges")
-      .select("target_fid, score")
-      .eq("source_fid", fid)
-      .order("score", { ascending: false })
+      .from("new_user_similarity_edges")
+      .select("fid_b, similarity")
+      .eq("fid_a", fid)
+      .order("similarity", { ascending: false })
       .limit(limit);
 
     if (error) throw error;

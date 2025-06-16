@@ -69,12 +69,12 @@ export class UserService {
 
     const {
       user_summary: { raw_summary, keywords },
-      user_embeddings: { vector: embeddings },
+      user_embeddings: { vector: embeddings, dimensions },
     } = userContext;
 
     console.log("User context summary:", userContext);
 
-    // Insert raw summary
+    // Insert raw summary with additional user data
     const profileExists = await this.db.checkIfUserProfileExists(fid);
     if (!profileExists) {
       const result = await this.db.insertUserProfile(fid, raw_summary);
@@ -83,7 +83,7 @@ export class UserService {
         console.warn("Failed to insert profile", result.error);
     }
 
-    // Insert keywords
+    // Insert keywords with weights
     const keywordsExist = await this.db.checkIfUserKeywordsExist(fid);
     if (!keywordsExist) {
       const result = await this.db.insertUserKeywords(fid, keywords);
@@ -92,7 +92,7 @@ export class UserService {
         console.warn("Failed to insert keywords", result.error);
     }
 
-    // Insert user embeddings
+    // Insert user embeddings with dimensions
     const embeddingExists = await this.db.checkIfUserEmbeddingExists(fid);
     if (!embeddingExists) {
       const result = await this.db.insertUserEmbedding(fid, embeddings);
@@ -118,10 +118,6 @@ export class UserService {
       console.log("Registration result:", regResult);
       if (!regResult.success) throw new Error("User registration failed");
     }
-
-    // Update webhook
-    // const newSubscribedUserIds = [...alreadySubscribedFIDs, fid];
-    // await this.neynar.updateWebhook({ updatedFids: newSubscribedUserIds });
 
     return { success: true, data: `User ${fid} subscribed` };
   }
