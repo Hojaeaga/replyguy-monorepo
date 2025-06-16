@@ -6,11 +6,9 @@ import {
   GenerateEmbeddingResponse,
   GalaxyTrendingResponse,
 } from "./types";
-import { AIProcessingResponse, Cast, createLogger } from "@replyguy/core";
+import { AIProcessingResponse, Cast } from "@replyguy/core";
 
-const AI_AGENT_BASE_URL = process.env.AI_AGENT_URL || "http://localhost:8001";
-
-const logger = createLogger("ai_service");
+const AI_AGENT_BASE_URL = process.env.AI_AGENT_URL || "http://ai-agent:8000";
 
 export class AIService {
   constructor() { }
