@@ -18,20 +18,20 @@ export class UserService {
       throw new Error("Failed to fetch subscribed FIDs");
     }
 
-    // const alreadySubscribed = await checkFIDStatus(Number(fid), this.db);
-    // if (!alreadySubscribed.success) {
-    //   throw new Error("Failed to check FID status");
-    // }
-    //
-    // // Handle already subscribed user
-    // if (alreadySubscribed.status === FID_STATUS.SUBSCRIBED) {
-    //   return { success: true, data: `User ${fid} already subscribed` };
-    // }
-    //
-    // // Handle existing but not subscribed user
-    // if (alreadySubscribed.status === FID_STATUS.EXIST) {
-    //   return await this.subscribeExistingUser(fid, alreadySubscribedFIDs);
-    // }
+    const alreadySubscribed = await checkFIDStatus(Number(fid), this.db);
+    if (!alreadySubscribed.success) {
+      throw new Error("Failed to check FID status");
+    }
+
+    // Handle already subscribed user
+    if (alreadySubscribed.status === FID_STATUS.SUBSCRIBED) {
+      return { success: true, data: `User ${fid} already subscribed` };
+    }
+
+    // Handle existing but not subscribed user
+    if (alreadySubscribed.status === FID_STATUS.EXIST) {
+      return await this.subscribeExistingUser(fid, alreadySubscribedFIDs);
+    }
 
     // Handle new user registration
     try {
@@ -117,6 +117,14 @@ export class UserService {
       );
       console.log("Registration result:", regResult);
       if (!regResult.success) throw new Error("User registration failed");
+    }
+
+    try {
+      await this.neynar.updateWebhook({
+        updatedFids: [...alreadySubscribedFIDs, fid],
+      });
+    } catch (error) {
+      console.warn("Failed to update webhook", error);
     }
 
     return { success: true, data: `User ${fid} subscribed` };
