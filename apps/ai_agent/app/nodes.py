@@ -58,16 +58,32 @@ async def extract_topics_llm(state: Dict[str, Any]) -> Dict[str, Any]:
     messages = [
         {
             "role": "system",
-            "content": "You are a JSON API that extracts topics from social media posts. Return a JSON object with an array of topics for each post.",
+            "content": """
+<instructions>
+  <role>You are a JSON API that extracts high-level, generalized topics from social media posts.</role>
+  
+  <goal>
+    Return a JSON object where each post ID maps to a list of broad, general topics. 
+    The topics should be suitable for clustering content by shared themes or interests.
+  </goal>
+
+  <rules>
+    <rule>Extract topics that are general and recognizable, like "AI", "Blockchain", "Fathers Day", "Solana", "Base", "Music", "Fitness".</rule>
+    <rule>DO NOT return very specific, niche, or compound terms like "crypto-dads", "solana memes", or "GPT-4o fine-tuning".</rule>
+    <rule>Do not include hashtags, usernames, or emojis in the topics.</rule>
+    <rule>All topics should be in Title Case and plain strings, not hashtags or phrases.</rule>
+  </rules>
+</instructions>
+""",
         },
         {
             "role": "user",
-            "content": f"Extract topics from these posts and return them in a JSON array format:\n{json.dumps(texts, indent=2)}",
+            "content": f"Extract generalized topics from the following posts:\n{json.dumps(texts, indent=2)}",
         },
     ]
 
     response = await get_structured_response(
-        model=get_generation_model(),
+        model=get_reasoning_model(),
         messages=messages,
         response_format={
             "type": "object",
