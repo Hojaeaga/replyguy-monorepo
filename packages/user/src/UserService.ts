@@ -18,23 +18,30 @@ export class UserService {
       throw new Error("Failed to fetch subscribed FIDs");
     }
 
-    const alreadySubscribed = await checkFIDStatus(Number(fid), this.db);
-    if (!alreadySubscribed.success) {
-      throw new Error("Failed to check FID status");
-    }
-
-    // Handle already subscribed user
-    if (alreadySubscribed.status === FID_STATUS.SUBSCRIBED) {
-      return { success: true, data: `User ${fid} already subscribed` };
-    }
-
-    // Handle existing but not subscribed user
-    if (alreadySubscribed.status === FID_STATUS.EXIST) {
-      return await this.subscribeExistingUser(fid, alreadySubscribedFIDs);
-    }
+    // const alreadySubscribed = await checkFIDStatus(Number(fid), this.db);
+    // if (!alreadySubscribed.success) {
+    //   throw new Error("Failed to check FID status");
+    // }
+    //
+    // // Handle already subscribed user
+    // if (alreadySubscribed.status === FID_STATUS.SUBSCRIBED) {
+    //   return { success: true, data: `User ${fid} already subscribed` };
+    // }
+    //
+    // // Handle existing but not subscribed user
+    // if (alreadySubscribed.status === FID_STATUS.EXIST) {
+    //   return await this.subscribeExistingUser(fid, alreadySubscribedFIDs);
+    // }
 
     // Handle new user registration
-    return await this.registerNewUser(fid, alreadySubscribedFIDs);
+    try {
+      return await this.registerNewUser(fid, alreadySubscribedFIDs);
+    } catch (error) {
+      return {
+        success: false,
+        data: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 
   private async subscribeExistingUser(
@@ -65,10 +72,13 @@ export class UserService {
       user_embeddings: { vector: embeddings },
     } = userContext;
 
+    console.log("User context summary:", userContext);
+
     // Insert raw summary
     const profileExists = await this.db.checkIfUserProfileExists(fid);
     if (!profileExists) {
       const result = await this.db.insertUserProfile(fid, raw_summary);
+      console.log("Profile insert result:", result);
       if (!result.success)
         console.warn("Failed to insert profile", result.error);
     }
@@ -77,6 +87,7 @@ export class UserService {
     const keywordsExist = await this.db.checkIfUserKeywordsExist(fid);
     if (!keywordsExist) {
       const result = await this.db.insertUserKeywords(fid, keywords);
+      console.log("Keywords insert result:", result);
       if (!result.success)
         console.warn("Failed to insert keywords", result.error);
     }
@@ -85,12 +96,14 @@ export class UserService {
     const embeddingExists = await this.db.checkIfUserEmbeddingExists(fid);
     if (!embeddingExists) {
       const result = await this.db.insertUserEmbedding(fid, embeddings);
+      console.log("Embedding insert result:", result);
       if (!result.success)
         console.warn("Failed to insert embedding", result.error);
     }
 
     // Insert edges (we assume similarity edges can be updated every time)
     const edgeResult = await this.db.insertUserSimilarityEdges(fid, embeddings);
+    console.log("Edge insert result:", edgeResult);
     if (!edgeResult.success)
       console.warn("Failed to insert similarity edges", edgeResult.error);
 
@@ -102,12 +115,13 @@ export class UserService {
         keywords,
         embeddings,
       );
+      console.log("Registration result:", regResult);
       if (!regResult.success) throw new Error("User registration failed");
     }
 
     // Update webhook
-    const newSubscribedUserIds = [...alreadySubscribedFIDs, fid];
-    await this.neynar.updateWebhook({ updatedFids: newSubscribedUserIds });
+    // const newSubscribedUserIds = [...alreadySubscribedFIDs, fid];
+    // await this.neynar.updateWebhook({ updatedFids: newSubscribedUserIds });
 
     return { success: true, data: `User ${fid} subscribed` };
   }

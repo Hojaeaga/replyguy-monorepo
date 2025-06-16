@@ -223,7 +223,7 @@ export class DBService {
     try {
       const { data, error } = await this.supabase
         .from("new_users")
-        .insert({ fid, summary });
+        .insert({ fid, raw_summary: summary });
       if (error) throw error;
       return { success: true, data };
     } catch (err: any) {

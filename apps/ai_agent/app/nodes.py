@@ -169,7 +169,7 @@ async def generate_user_embedding(state: Dict[str, Any]) -> Dict[str, Any]:
 
     embedding = await get_embeddings(summary_text)
 
-    state["user_embedding"] = {
+    state["user_embeddings"] = {
         "vector": embedding,
         "dimensions": len(embedding),
         "source_text": summary_text,  # optional for debugging
@@ -337,15 +337,17 @@ async def match_trending_to_user(state: Dict[str, Any]) -> Dict[str, Any]:
     Output: { matched_clusters: [{ topic, score, top_casts }] }
     """
     user_embedding = state["user_embedding"]
-    
+
     # Handle both raw vector and structured embedding inputs
     if isinstance(user_embedding, list):
         user_vec = user_embedding
     elif isinstance(user_embedding, dict) and "vector" in user_embedding:
         user_vec = user_embedding["vector"]
     else:
-        raise ValueError("user_embedding must be either a list of numbers or a dict with 'vector' key")
-    
+        raise ValueError(
+            "user_embedding must be either a list of numbers or a dict with 'vector' key"
+        )
+
     clusters = state["trending_clusters"]
 
     scored_clusters = []

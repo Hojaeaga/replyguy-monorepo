@@ -11,7 +11,9 @@ type UserSubscriptionResponse = {
   };
 };
 
-const fetchUserSubscription = async (fid: number): Promise<UserSubscriptionResponse> => {
+const fetchUserSubscription = async (
+  fid: number,
+): Promise<UserSubscriptionResponse> => {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/register/user?fid=${fid}`,
     {
@@ -29,7 +31,7 @@ const fetchUserSubscription = async (fid: number): Promise<UserSubscriptionRespo
 };
 
 async function fetchTrendingData(fid: number) {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/trending`, {
+  const response = await fetch(`/api/trending`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -45,49 +47,52 @@ async function fetchTrendingData(fid: number) {
 export default function TrendingPage() {
   const { context } = useFrame();
   const router = useRouter();
-
+  // const fid = context?.user?.fid;
+  const fid = 435464; // Hardcoded for testing, replace with context?.user?.fid in production
   const { data: subscriptionData } = useQuery({
     queryKey: ["userSubscription", context?.user?.fid],
     queryFn: async () => {
-      if (!context?.user?.fid) {
-        return Promise.resolve({ result: { subscribed: false } });
-      }
-      return await fetchUserSubscription(context.user.fid);
+      // if (!context?.user?.fid) {
+      //   return Promise.resolve({ result: { subscribed: false } });
+      // }
+      // const fid = context?.user?.fid;
+      const fid = 435464;
+      return await fetchUserSubscription(fid);
     },
     enabled: !!context?.user?.fid,
   });
 
-  // Redirect to home if not subscribed
-  useEffect(() => {
-    if (subscriptionData && !subscriptionData.result.subscribed) {
-      router.push('/');
-    }
-  }, [subscriptionData, router]);
+  // // Redirect to home if not subscribed
+  // useEffect(() => {
+  //   if (subscriptionData && !subscriptionData.result.subscribed) {
+  //     router.push('/');
+  //   }
+  // }, [subscriptionData, router]);
 
   const {
     data: trendingData,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["trending", context?.user?.fid],
-    queryFn: () => fetchTrendingData(context?.user?.fid as number),
-    enabled: !!context?.user?.fid,
+    queryKey: ["trending", fid],
+    queryFn: () => fetchTrendingData(fid),
+    enabled: !!fid,
   });
 
   // Redirect to main app if not in mini app context
-  useEffect(() => {
-    if (!context || !context.user?.displayName) {
-      window.location.href = "https://farcaster.xyz/miniapps/1six6FpX-nRm/replyguy";
-    }
-  }, [context]);
+  // useEffect(() => {
+  //   if (!context || !context.user?.displayName) {
+  //     window.location.href = "https://farcaster.xyz/miniapps/1six6FpX-nRm/replyguy";
+  //   }
+  // }, [context]);
 
-  if (!context?.user?.fid) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-xl">Please open this in Farcaster</div>
-      </div>
-    );
-  }
+  // if (!context?.user?.fid) {
+  //   return (
+  //     <div className="flex min-h-screen items-center justify-center">
+  //       <div className="text-xl">Please open this in Farcaster</div>
+  //     </div>
+  //   );
+  // }
 
   if (isLoading) {
     return (
@@ -134,4 +139,3 @@ export default function TrendingPage() {
     </div>
   );
 }
-
