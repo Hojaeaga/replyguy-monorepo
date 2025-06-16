@@ -35,13 +35,7 @@ Here’s a **complete, copy-paste-ready monorepo layout** for ReplyGuy, presente
 │   │   ├── package.json
 │   │   └── Dockerfile
 │   │
-│   ├── validator/                     # 3️⃣ Reclaim zkTLS proof verifier
-│   │   ├── src/
-│   │   │   └── index.ts
-│   │   ├── package.json
-│   │   └── Dockerfile
-│   │
-│   └── web/                           # 4️⃣ Next .js 14 (mini-app-ready)
+│   └── web/                           # 3️⃣ Next.js 14 (mini-app-ready)
 │       ├── src/
 │       │   ├── app/
 │       │   │   └── page.tsx
@@ -60,9 +54,6 @@ Here’s a **complete, copy-paste-ready monorepo layout** for ReplyGuy, presente
 │   │   └── package.json
 │   ├── queue/
 │   │   ├── src/                       # Redis/SQS abstraction
-│   │   └── package.json
-│   ├── reclaim/
-│   │   ├── src/                       # zkfetch helpers
 │   │   └── package.json
 │   ├── farcaster-adapter/
 │   │   ├── src/                       # Neynar I/O & trending cache
@@ -115,7 +106,6 @@ Here’s a **complete, copy-paste-ready monorepo layout** for ReplyGuy, presente
 | ------------- | -------------- | -------------------------------------------------------------------------------- |
 | **ingestion** | Node + Express | Verifies Neynar webhook → pushes job into queue.                                 |
 | **worker**    | Node           | Stateless worker: fetches job → embeddings, OpenAI, similarity search → replies. |
-| **validator** | Node           | Consumes `{payload, proof}` → verifies zkTLS proof with Reclaim → ACK/NACK.      |
 | **web**       | Next .js 14    | Operator dashboard **and** Farcaster Mini-App UI (via `miniapp.json`).           |
 
 ---
@@ -127,7 +117,6 @@ Here’s a **complete, copy-paste-ready monorepo layout** for ReplyGuy, presente
 | **core**              | Zod types, pino logger, custom errors.                                 |
 | **db**                | Supabase client with typed queries & migrations.                       |
 | **queue**             | Thin wrapper around Redis Streams **or** AWS SQS; interchangeable.     |
-| **reclaim**           | `zkfetch()` helper → returns `{payload, proof}`.                       |
 | **farcaster-adapter** | Neynar API, trending-cast cache, `postReply()`.                        |
 | **openai**            | GPT client with token counting & cost caps; memoized embeddings.       |
 | **ui**                | shadcn + Tailwind components reused by Next.js pages.                  |

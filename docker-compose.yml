@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # Redis service
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Ingestion service
+  ingestion:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner-node
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - PORT=3001
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["node", "apps/ingestion/dist/index.js"]
+    volumes:
+      - ./.env:/app/.env:ro
+
+  # Worker service
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner-node
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - PORT=3002
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["node", "apps/worker/dist/index.js"]
+    volumes:
+      - ./.env:/app/.env:ro
+
+  # AI Agent service
+  ai-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner-python
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./.env:/app/.env:ro
+
+volumes:
+  redis_data:
+
+networks:
+  default:
+    name: replyguy_network

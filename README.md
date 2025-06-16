@@ -59,11 +59,26 @@ We use shared TypeScript configurations from `packages/config/tsconfig/`:
 ### Prerequisites
 - Node.js 18+
 - pnpm 8.15.4+
+- Docker Desktop 20.10+ (for Docker setup)
+- Docker Compose 2.0+ (for Docker setup)
 
 ### Installation
+
+#### Option 1: Local Development
 ```bash
 pnpm install
 ```
+
+#### Option 2: Docker Development
+```bash
+# Quick start with Docker
+make dev
+
+# Or build and run production
+make prod
+```
+
+See [DOCKER.md](./DOCKER.md) for complete Docker setup instructions.
 
 ### Development
 ```bash
@@ -215,6 +230,34 @@ Reusable React components built with shadcn/ui and Tailwind CSS.
 ### `@replyguy/config`
 Shared ESLint, Prettier, and TypeScript configurations.
 
+## 🐳 Docker Support
+
+The project includes comprehensive Docker support for both development and production:
+
+### Quick Start with Docker
+```bash
+# Development mode with hot reload
+make dev
+
+# Production mode
+make prod
+
+# View logs
+make logs
+
+# Stop services
+make down
+```
+
+### Docker Architecture
+- Multi-stage builds with Turborepo pruning for optimal caching
+- Development mode with hot reload via volume mounts
+- Production-ready images with non-root users
+- Health checks for all services
+- Docker Compose orchestration for local development
+
+See [DOCKER.md](./DOCKER.md) for detailed Docker documentation.
+
 ## 🚢 Deployment
 
 Each app in `apps/` is designed to be independently deployable:
@@ -223,6 +266,11 @@ Each app in `apps/` is designed to be independently deployable:
 - **worker** - Background job processor
 - **web** - Next.js web application
 - **ai_agent** - Python-based AI service
+
+### Deployment Options
+1. **Docker Containers** - Build and deploy using the provided Dockerfiles
+2. **Traditional Node.js** - Build with `pnpm build` and run with `node`
+3. **Serverless** - Deploy individual services to platforms like Vercel, Railway, etc.
 
 ## 🤝 Contributing
 
