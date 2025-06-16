@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # Redis service
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Ingestion service
+  ingestion:
+    image: ghcr.io/megabyte0x/replyguy-monorepo/ingestion:latest
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - PORT=3001
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    env_file:
+      - .env
+
+  # Worker service
+  worker:
+    image: ghcr.io/megabyte0x/replyguy-monorepo/worker:latest
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    env_file:
+      - .env
+
+  # AI Agent service
+  ai-agent:
+    image: ghcr.io/megabyte0x/replyguy-monorepo/ai-agent:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    env_file:
+      - .env
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - ingestion
+      - ai-agent
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+
+networks:
+  default:
+    name: replyguy_network

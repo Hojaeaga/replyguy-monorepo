@@ -12,3 +12,4 @@ server/dist
 public/dist
 .pnpm-store
 dump.rdb
+infra/aws/.terraform

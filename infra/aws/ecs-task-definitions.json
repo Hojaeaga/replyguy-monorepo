@@ -1,0 +1,170 @@
+{
+  "ingestion": {
+    "family": "replyguy-ingestion",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/replyguy-production-ecs-task-execution-role",
+    "containerDefinitions": [
+      {
+        "name": "ingestion",
+        "image": "ghcr.io/megabyte0x/replyguy-monorepo/ingestion:latest",
+        "portMappings": [
+          {
+            "containerPort": 3001,
+            "protocol": "tcp"
+          }
+        ],
+        "environment": [
+          {
+            "name": "NODE_ENV",
+            "value": "production"
+          },
+          {
+            "name": "PORT",
+            "value": "3001"
+          }
+        ],
+        "secrets": [
+          {
+            "name": "REDIS_URL",
+            "valueFrom": "/replyguy/production/REDIS_URL"
+          },
+          {
+            "name": "SUPABASE_URL",
+            "valueFrom": "/replyguy/production/SUPABASE_URL"
+          },
+          {
+            "name": "SUPABASE_ANON_KEY",
+            "valueFrom": "/replyguy/production/SUPABASE_ANON_KEY"
+          },
+          {
+            "name": "NEYNAR_API_KEY",
+            "valueFrom": "/replyguy/production/NEYNAR_API_KEY"
+          },
+          {
+            "name": "NEYNAR_WEBHOOK_ID",
+            "valueFrom": "/replyguy/production/NEYNAR_WEBHOOK_ID"
+          }
+        ],
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/replyguy-production-ingestion",
+            "awslogs-region": "ap-south-1",
+            "awslogs-stream-prefix": "ecs"
+          }
+        },
+        "healthCheck": {
+          "command": ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"],
+          "interval": 30,
+          "timeout": 5,
+          "retries": 3,
+          "startPeriod": 60
+        }
+      }
+    ]
+  },
+  "worker": {
+    "family": "replyguy-worker",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/replyguy-production-ecs-task-execution-role",
+    "containerDefinitions": [
+      {
+        "name": "worker",
+        "image": "ghcr.io/megabyte0x/replyguy-monorepo/worker:latest",
+        "environment": [
+          {
+            "name": "NODE_ENV",
+            "value": "production"
+          }
+        ],
+        "secrets": [
+          {
+            "name": "REDIS_URL",
+            "valueFrom": "/replyguy/production/REDIS_URL"
+          },
+          {
+            "name": "SUPABASE_URL",
+            "valueFrom": "/replyguy/production/SUPABASE_URL"
+          },
+          {
+            "name": "SUPABASE_ANON_KEY",
+            "valueFrom": "/replyguy/production/SUPABASE_ANON_KEY"
+          },
+          {
+            "name": "OPENAI_API_KEY",
+            "valueFrom": "/replyguy/production/OPENAI_API_KEY"
+          },
+          {
+            "name": "NEYNAR_API_KEY",
+            "valueFrom": "/replyguy/production/NEYNAR_API_KEY"
+          }
+        ],
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/replyguy-production-worker",
+            "awslogs-region": "ap-south-1",
+            "awslogs-stream-prefix": "ecs"
+          }
+        }
+      }
+    ]
+  },
+  "ai-agent": {
+    "family": "replyguy-ai-agent",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "512",
+    "memory": "1024",
+    "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/replyguy-production-ecs-task-execution-role",
+    "containerDefinitions": [
+      {
+        "name": "ai-agent",
+        "image": "ghcr.io/megabyte0x/replyguy-monorepo/ai-agent:latest",
+        "portMappings": [
+          {
+            "containerPort": 8000,
+            "protocol": "tcp"
+          }
+        ],
+        "environment": [
+          {
+            "name": "PYTHONPATH",
+            "value": "/app"
+          }
+        ],
+        "secrets": [
+          {
+            "name": "REDIS_URL",
+            "valueFrom": "/replyguy/production/REDIS_URL"
+          },
+          {
+            "name": "OPENAI_API_KEY",
+            "valueFrom": "/replyguy/production/OPENAI_API_KEY"
+          }
+        ],
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/replyguy-production-ai_agent",
+            "awslogs-region": "ap-south-1",
+            "awslogs-stream-prefix": "ecs"
+          }
+        },
+        "healthCheck": {
+          "command": ["CMD-SHELL", "curl -f http://localhost:8000/docs || exit 1"],
+          "interval": 30,
+          "timeout": 5,
+          "retries": 3,
+          "startPeriod": 60
+        }
+      }
+    ]
+  }
+}
