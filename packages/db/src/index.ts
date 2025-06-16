@@ -10,7 +10,7 @@ export class DBService {
   async fetchSubscriberCount() {
     try {
       const { data, error } = await this.supabase
-        .from("user_embeddings")
+        .from("new_users")
         .select("fid")
         .eq("is_subscribed", true);
       if (error) throw error;
@@ -24,7 +24,7 @@ export class DBService {
   async getUser(fid: number) {
     try {
       const { data, error } = await this.supabase
-        .from("user_embeddings")
+        .from("new_users")
         .select("*")
         .eq("fid", fid);
       if (error) throw error;
@@ -38,7 +38,7 @@ export class DBService {
   async isSubscribed(fid: number) {
     try {
       const { data, error } = await this.supabase
-        .from("user_embeddings")
+        .from("new_users")
         .select("fid")
         .eq("fid", fid)
         .eq("is_subscribed", true)
@@ -54,7 +54,7 @@ export class DBService {
   async unsubscribeFID(fid: number) {
     try {
       const { data, error } = await this.supabase
-        .from("user_embeddings")
+        .from("new_users")
         .update({ is_subscribed: false, is_unsubscribed: true })
         .eq("fid", fid);
       if (error) throw error;
@@ -68,7 +68,7 @@ export class DBService {
   async isRegistered(fid: number) {
     try {
       const { data, error } = await this.supabase
-        .from("user_embeddings")
+        .from("new_users")
         .select("fid")
         .eq("fid", fid)
         .maybeSingle();
@@ -82,14 +82,12 @@ export class DBService {
 
   async registerAndSubscribeFID(fid: string, summary: any, embeddings: any) {
     try {
-      const { data, error } = await this.supabase
-        .from("user_embeddings")
-        .insert({
-          fid,
-          summary,
-          embeddings,
-          is_subscribed: true,
-        });
+      const { data, error } = await this.supabase.from("new_users").insert({
+        fid,
+        summary,
+        embeddings,
+        is_subscribed: true,
+      });
       if (error) throw error;
       return { success: true, data };
     } catch (err: any) {
@@ -101,7 +99,7 @@ export class DBService {
   async onlySubscribeFID(fid: string) {
     try {
       const { data, error } = await this.supabase
-        .from("user_embeddings")
+        .from("new_users")
         .update({ is_subscribed: true })
         .eq("fid", fid);
       if (error) throw error;
@@ -114,14 +112,12 @@ export class DBService {
 
   async onlyRegisterFID(fid: string, summary: any, embeddings: any) {
     try {
-      const { data, error } = await this.supabase
-        .from("user_embeddings")
-        .insert({
-          fid,
-          summary,
-          embeddings,
-          is_subscribed: false,
-        });
+      const { data, error } = await this.supabase.from("new_users").insert({
+        fid,
+        summary,
+        embeddings,
+        is_subscribed: false,
+      });
       if (error) throw error;
       return { success: true, data };
     } catch (err: any) {
@@ -133,7 +129,7 @@ export class DBService {
   async fetchSubscribedFIDs() {
     try {
       const { data, error } = await this.supabase
-        .from("user_embeddings")
+        .from("new_users")
         .select("fid")
         .eq("is_subscribed", true);
       if (error) throw error;
@@ -148,7 +144,7 @@ export class DBService {
   async checkFIDStatus(fid: number) {
     try {
       const { data, error } = await this.supabase
-        .from("user_embeddings")
+        .from("new_users")
         .select("fid, is_subscribed")
         .eq("fid", fid)
         .maybeSingle();
@@ -162,9 +158,7 @@ export class DBService {
 
   async fetchAllFIDs() {
     try {
-      const { data, error } = await this.supabase
-        .from("user_embeddings")
-        .select("*");
+      const { data, error } = await this.supabase.from("new_users").select("*");
       if (error) throw error;
       return { success: true, data };
     } catch (err: any) {
@@ -221,15 +215,13 @@ export class DBService {
 
   async insertUserProfile(fid: string, summary: string) {
     try {
-      const { data, error } = await this.supabase
-        .from("new_users")
-        .insert({ 
-          fid, 
-          raw_summary: summary,
-          username: null,
-          tone: null,
-          channels: []
-        });
+      const { data, error } = await this.supabase.from("new_users").insert({
+        fid,
+        raw_summary: summary,
+        username: null,
+        tone: null,
+        channels: [],
+      });
       if (error) throw error;
       return { success: true, data };
     } catch (err: any) {
@@ -239,10 +231,10 @@ export class DBService {
   }
 
   async insertUserKeywords(fid: string, keywords: string[]) {
-    const keywordRows = keywords.map((k) => ({ 
-      fid, 
+    const keywordRows = keywords.map((k) => ({
+      fid,
       topic: k,
-      weight: 1.0
+      weight: 1.0,
     }));
     try {
       const { data, error } = await this.supabase
@@ -260,11 +252,11 @@ export class DBService {
     try {
       const { data, error } = await this.supabase
         .from("new_user_embeddings")
-        .insert({ 
-          fid, 
+        .insert({
+          fid,
           embedding,
           dimensions: embedding.length,
-          source_text: null
+          source_text: null,
         });
       if (error) throw error;
       return { success: true, data };
