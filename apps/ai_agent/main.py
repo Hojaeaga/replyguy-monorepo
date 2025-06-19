@@ -2,7 +2,8 @@
 Main FastAPI application
 """
 
-from typing import Dict
+from typing import Dict, Any
+from pydantic import BaseModel
 
 from fastapi import FastAPI, HTTPException
 
@@ -11,6 +12,7 @@ from app.workflows.embeddings import EmbeddingsWorkflow
 from app.workflows.galaxy_trending import TrendingGalaxyWorkflow
 from app.workflows.reply_generation import ReplyGenerationWorkflow
 from app.workflows.user_summary import UserSummaryWorkflow
+from app.workflows.user_analysis import UserAnalysisWorkflow, UserData, UserAnalysisResult
 
 app = FastAPI(
     title="AI Reply Service",
@@ -23,7 +25,30 @@ user_summary_workflow = UserSummaryWorkflow()
 reply_workflow = ReplyGenerationWorkflow()
 embeddings_workflow = EmbeddingsWorkflow()
 trending_galaxy_workflow = TrendingGalaxyWorkflow()
+user_analysis_workflow = UserAnalysisWorkflow()
 
+class UserAnalysisRequest(BaseModel):
+    """Request model for user analysis"""
+    fid: int
+    profile: Dict[str, Any]
+
+@app.post("/api/user-analysis", response_model=UserAnalysisResult)
+async def analyze_user(request: UserAnalysisRequest) -> UserAnalysisResult:
+    """Analyze a user's profile and find similar users"""
+    try:
+        # Run analysis
+        result = await user_analysis_workflow.run(UserData(
+            fid=request.fid,
+            profile=request.profile
+        ))
+        
+        if not result:
+            raise HTTPException(status_code=500, detail="Failed to analyze user")
+            
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/user-summary")
 async def generate_user_summary(request: Dict) -> Dict:
