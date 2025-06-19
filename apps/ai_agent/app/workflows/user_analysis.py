@@ -1,23 +1,25 @@
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from pydantic import BaseModel
-from ..nodes.user_analysis_nodes import (
-    generate_embedding,
-    analyze_user_profile
-)
+
 
 class UserData(BaseModel):
     """Input data for user analysis"""
+
     fid: int
     profile: Dict[str, Any]
 
+
 class UserAnalysisResult(BaseModel):
     """Result of user analysis containing only the behavioural summary and its embedding vector"""
+
     summary: str
     embedding: list[float]
 
+
 class UserAnalysisWorkflow:
     """Workflow for analyzing user profiles and finding similar users"""
-    
+
     def __init__(self):
         """UserAnalysisWorkflow relies on environment variables for OpenAI credentials."""
         pass
@@ -45,4 +47,5 @@ class UserAnalysisWorkflow:
 
         except Exception as e:
             print(f"Error in user analysis workflow: {str(e)}")
-            return None 
+            return None
+
