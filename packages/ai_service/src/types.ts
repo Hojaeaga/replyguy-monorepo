@@ -71,3 +71,21 @@ export interface UserSummaryResponse {
     dimensions: number;
   };
 }
+
+// ------------- User Analysis -------------
+export interface UserAnalysisRequest {
+  fid: number;
+  profile: {
+    username: string;
+    bio: string;
+    casts: any;
+    channels: string[];
+    follower_count: number;
+    following_count: number;
+  };
+}
+
+export interface UserAnalysisResponse {
+  summary: string;
+  embedding: number[];
+}

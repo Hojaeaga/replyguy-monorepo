@@ -11,39 +11,36 @@ class UserData(BaseModel):
     profile: Dict[str, Any]
 
 class UserAnalysisResult(BaseModel):
-    """Result of user analysis"""
+    """Result of user analysis containing only the behavioural summary and its embedding vector"""
     summary: str
-    keywords: Dict[str, float]
     embedding: list[float]
-    similar_users: list[Dict[str, Any]]
 
 class UserAnalysisWorkflow:
     """Workflow for analyzing user profiles and finding similar users"""
     
-    def __init__(self, openai_api_key: str):
-        self.openai_api_key = openai_api_key
+    def __init__(self):
+        """UserAnalysisWorkflow relies on environment variables for OpenAI credentials."""
+        pass
 
     async def run(self, user_data: UserData) -> Optional[UserAnalysisResult]:
         """Run the user analysis workflow"""
         try:
-            # Generate embedding for the user
-            embedding = await generate_embedding(
-                user_data.profile
-            )
+            # 1️⃣ Analyze user profile to get behavioural summary (keyword pairs)
+            analysis = await analyze_user_profile(user_data.profile)
+            if not analysis or not analysis.get("summary"):
+                return None
+
+            summary_text = analysis["summary"]
+
+            # 2️⃣ Generate embedding from the summary text
+            embedding = await generate_embedding(summary_text)
             if not embedding:
                 return None
 
-            # Analyze user profile
-            analysis = await analyze_user_profile(
-                user_data.profile
-            )
-            if not analysis:
-                return None
-
+            # Return only the summary and the raw embedding vector
             return UserAnalysisResult(
-                summary=analysis["summary"],
-                keywords=analysis["keywords"],
-                embedding=embedding
+                summary=summary_text,
+                embedding=embedding,
             )
 
         except Exception as e:

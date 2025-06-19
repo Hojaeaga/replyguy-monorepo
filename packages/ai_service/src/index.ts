@@ -5,12 +5,13 @@ import {
   GenerateReplyRequest,
   GenerateEmbeddingResponse,
   GalaxyTrendingResponse,
+  UserAnalysisRequest,
+  UserAnalysisResponse,
 } from "./types";
 import { AIProcessingResponse, Cast, createLogger } from "@replyguy/core";
 
 const AI_AGENT_BASE_URL = process.env.AI_AGENT_URL || "http://localhost:8001";
 
-const logger = createLogger("ai_service");
 
 export class AIService {
   constructor() {}
@@ -146,4 +147,26 @@ export class AIService {
       return null;
     }
   }
+
+  /**
+   * Analyze a Farcaster user profile and return behavioural summary & embedding
+   */
+  async analyzeUser(
+    request: UserAnalysisRequest,
+  ): Promise<UserAnalysisResponse | null> {
+    try {
+      const response = await axios.post<UserAnalysisResponse>(
+        `${AI_AGENT_BASE_URL}/api/user-analysis`,
+        request,
+      );
+      return response.data;
+    } catch (err: unknown) {
+      console.error(
+        "analyzeUser error",
+        err instanceof Error ? err.message : err,
+      );
+      return null;
+    }
+  }
+
 }
